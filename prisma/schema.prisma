@@ -1,0 +1,178 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  username     String   @unique
+  password     String
+  role         Role     @relation(fields: [roleId], references: [id])
+  roleId       String
+  sale         Sale[]
+  refreshToken String?  @unique @db.VarChar(400)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([roleId], name: "roleId")
+}
+
+model Role {
+  id          String       @id @default(cuid())
+  name        String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  User        User[]
+  permissions Permission[]
+}
+
+model Permission {
+  id        String   @id @default(cuid())
+  name      String
+  roles     Role[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Customer {
+  id         String     @id @default(cuid())
+  name       String
+  phone      String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  active     Boolean    @default(true)
+  sales      Sale[]
+  Group      Group?     @relation(fields: [groupId], references: [id])
+  groupId    String?
+  memberRole MemberRole @default(ANGGOTA)
+
+  @@index([groupId], name: "groupId")
+}
+
+enum MemberRole {
+  ANGGOTA
+  KETUA
+}
+
+model Group {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  members   Customer[]
+}
+
+model Sale {
+  id            String        @id @default(cuid())
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  customer      Customer?     @relation(fields: [customerId], references: [id])
+  customerId    String?
+  total         Float
+  cash          Float?
+  change        Float?
+  products      ProductSale[]
+  user          User          @relation(fields: [userId], references: [id])
+  userId        String
+  paymentMethod PaymentMethod @default(TUNAI)
+  status        SaleStatus    @default(SELESAI)
+  dueDate       DateTime?
+
+  @@index([customerId], name: "customerId")
+  @@index([userId], name: "userId")
+}
+
+enum SaleStatus {
+  SELESAI
+  PROSES
+  BATAL
+}
+
+enum PaymentMethod {
+  TUNAI
+  KREDIT
+}
+
+model Product {
+  id         String         @id @default(cuid())
+  name       String         @unique
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  categoryId String
+  category   Category       @relation(fields: [categoryId], references: [id])
+  stock      Int
+  price      Float
+  active     Boolean        @default(true)
+  sales      ProductSale[]
+  purchases  PurchaseItem[]
+  barcode    String?        @unique
+
+  @@index([categoryId], name: "categoryId")
+}
+
+model ProductSale {
+  saleId    String
+  sale      Sale    @relation(fields: [saleId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  total     Float
+
+  @@id([saleId, productId])
+  @@index([productId], name: "productId")
+  @@index([saleId], name: "saleId")
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  products  Product[]
+}
+
+model Supplier {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  address   String?
+  phone     String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  active    Boolean    @default(true)
+  purchases Purchase[]
+}
+
+model Purchase {
+  id         String         @id @default(cuid())
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  total      Float
+  supplierId String
+  supplier   Supplier       @relation(fields: [supplierId], references: [id])
+  products   PurchaseItem[]
+
+  @@index([supplierId], name: "supplierId")
+}
+
+model PurchaseItem {
+  productId     String
+  product       Product  @relation(fields: [productId], references: [id])
+  purchaseId    String
+  Purchase      Purchase @relation(fields: [purchaseId], references: [id])
+  quantity      Int
+  purchasePrice Float
+  total         Float
+
+  @@id([purchaseId, productId])
+  @@index([productId], name: "productId")
+  @@index([purchaseId], name: "purchaseId")
+}
