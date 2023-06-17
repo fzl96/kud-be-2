@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { Request, Response } from "express";
-import { db } from "../lib/db";
+import { db } from "../lib/db.js";
 
 export const getRoles = async (req: Request, res: Response) => {
   try {
@@ -136,12 +136,10 @@ export const deleteRole = async (req: Request, res: Response) => {
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
       if (err.code === "P2003") {
-        res
-          .status(400)
-          .json({
-            error:
-              "Role digunakan oleh user, hapus atau ganti role user terlebih dahulu",
-          });
+        res.status(400).json({
+          error:
+            "Role digunakan oleh user, hapus atau ganti role user terlebih dahulu",
+        });
       } else if (err.code === "P2025") {
         res.status(400).json({ error: "Role tidak ditemukan" });
       } else {
@@ -161,12 +159,10 @@ export const deleteRoles = async (req: Request, res: Response) => {
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
       if (err.code === "P2003") {
-        res
-          .status(400)
-          .json({
-            error:
-              "Role digunakan oleh user, hapus atau ganti role user terlebih dahulu",
-          });
+        res.status(400).json({
+          error:
+            "Role digunakan oleh user, hapus atau ganti role user terlebih dahulu",
+        });
       } else if (err.code === "P2025") {
         res.status(400).json({ error: "Role tidak ditemukan" });
       } else {

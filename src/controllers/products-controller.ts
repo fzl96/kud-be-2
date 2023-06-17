@@ -1,7 +1,8 @@
 import { Prisma } from "@prisma/client";
 import { Request, Response } from "express";
 import { z } from "zod";
-import { db } from "../lib/db";
+import { db } from "../lib/db.js";
+import XLSX from "xlsx";
 
 const productSchema = z.object({
   name: z.string().optional(),
@@ -228,5 +229,58 @@ export const deleteProducts = async (req: Request, res: Response) => {
         res.status(500).json({ error: err.message });
       }
     }
+  }
+};
+
+export const exportProducts = async (req: Request, res: Response) => {
+  const { ids } = req.body;
+  try {
+    const products = await db.product.findMany({
+      where: { id: { in: ids } },
+      select: {
+        id: true,
+        name: true,
+        price: true,
+        stock: true,
+        active: true,
+        barcode: true,
+        createdAt: true,
+        updatedAt: true,
+        category: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    const mappedProducts = products.map((product) => ({
+      id: product.id,
+      kategori: product.category.name,
+      nama: product.name,
+      harga: product.price,
+      stok: product.stock,
+      barcode: product.barcode,
+      dibuat: product.createdAt,
+      diubah: product.updatedAt,
+    }));
+
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(mappedProducts);
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Barang");
+    const buffer = XLSX.write(workbook, { type: "buffer" });
+
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=" + "Barang.xlsx"
+    );
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.send(buffer);
+  } catch (err) {
+    if (err instanceof Error) res.status(500).json({ error: err.message });
   }
 };

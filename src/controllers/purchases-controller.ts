@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { Request, Response } from "express";
 import { z } from "zod";
-import { db } from "../lib/db";
+import { db } from "../lib/db.js";
 
 const purchaseItemSchema = z.object({
   id: z.string(),
@@ -18,14 +18,41 @@ export const getPurchases = async (req: Request, res: Response) => {
       select: {
         id: true,
         createdAt: true,
+        products: {
+          select: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+            purchasePrice: true,
+            total: true,
+            quantity: true,
+          },
+        },
         updatedAt: true,
         supplier: true,
         total: true,
       },
     });
 
+    const mappedPurchases = purchases.map((purchase) => ({
+      id: purchase.id,
+      createdAt: purchase.createdAt,
+      updatedAt: purchase.updatedAt,
+      total: purchase.total,
+      supplier: purchase.supplier,
+      items: purchase.products.map((product) => ({
+        id: product.product.id,
+        quantity: product.quantity,
+        name: product.product.name,
+        purchasePrice: product.purchasePrice,
+        total: product.total,
+      })),
+    }));
+
     if (includeProductsSuppliers) {
-      console.log("test");
       const suppliers = await db.supplier.findMany({
         where: { active: true },
       });
@@ -49,14 +76,14 @@ export const getPurchases = async (req: Request, res: Response) => {
       });
 
       res.status(200).json({
-        purchases,
+        purchases: mappedPurchases,
         suppliers,
         products,
       });
       return;
     }
 
-    res.status(200).json(purchases);
+    res.status(200).json(mappedPurchases);
   } catch (err) {
     if (err instanceof Error) res.status(500).json({ error: err.message });
   }

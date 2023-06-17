@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
-import { db } from "../lib/db";
+import { db } from "../lib/db.js";
 
 const categorySchema = z.object({
   name: z.string(),

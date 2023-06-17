@@ -6,7 +6,7 @@ import {
   updateRole,
   deleteRole,
   deleteRoles,
-} from "../controllers/roles-controller";
+} from "../controllers/roles-controller.js";
 
 const router = express.Router();
 

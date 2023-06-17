@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { Request, Response } from "express";
-import { db } from "../lib/db";
+import { db } from "../lib/db.js";
 
 export const getGroups = async (req: Request, res: Response) => {
   try {
@@ -46,44 +46,109 @@ export const getGroups = async (req: Request, res: Response) => {
 
 export const getGroup = async (req: Request, res: Response) => {
   const { id } = req.params;
+  const includeSales = req.query.include_sales === "true";
+  const year = req.query.year as string;
+  const month = req.query.month as string;
+
+  if (includeSales && (!year || !month)) {
+    res.status(400).json({ error: "Tahun dan bulan diperlukan" });
+    return;
+  }
+
   try {
-    const group = await db.group.findUnique({
-      where: { id: id as string },
-      include: {
-        members: {
-          select: {
-            id: true,
-            name: true,
-            memberRole: true,
+    if (!includeSales) {
+      const group = await db.group.findUnique({
+        where: { id: id as string },
+        include: {
+          members: {
+            select: {
+              id: true,
+              name: true,
+              memberRole: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    if (!group) {
-      res.status(200).json(group);
+      if (!group) {
+        res.status(200).json(group);
+      }
+      const leader = group?.members.find(
+        (member) => member.memberRole === "KETUA"
+      );
+
+      res.status(200).json({
+        id: group?.id,
+        name: group?.name,
+        numberOfMembers: group?.members.length,
+        createdAt: group?.createdAt,
+        updatedAt: group?.updatedAt,
+        members: group?.members.map((member) => ({
+          id: member.id,
+          name: member.name,
+          status: member.memberRole,
+        })),
+        leader: {
+          id: leader?.id,
+          name: leader?.name,
+        },
+      });
+    } else {
+      const group = await db.group.findUnique({
+        where: { id: id as string },
+        include: {
+          members: {
+            select: {
+              id: true,
+              name: true,
+              memberRole: true,
+              sales: {
+                select: {
+                  id: true,
+                  total: true,
+                  status: true,
+                  createdAt: true,
+                },
+                where: {
+                  createdAt: {
+                    gte: new Date(`${year}-${month}-01`),
+                    lt: new Date(`${year}-${month}-31`),
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!group) {
+        res.status(200).json(group);
+      }
+      const leader = group?.members.find(
+        (member) => member.memberRole === "KETUA"
+      );
+
+      res.status(200).json({
+        id: group?.id,
+        name: group?.name,
+        numberOfMembers: group?.members.length,
+        leader: {
+          id: leader?.id,
+          name: leader?.name,
+        },
+        members: group?.members.map((member) => ({
+          id: member.id,
+          name: member.name,
+          status: member.memberRole,
+          totalTransactions: member.sales.reduce(
+            (acc, sale) => acc + sale.total,
+            0
+          ),
+        })),
+        createdAt: group?.createdAt,
+        updatedAt: group?.updatedAt,
+      });
     }
-
-    const leader = group?.members.find(
-      (member) => member.memberRole === "KETUA"
-    );
-
-    res.status(200).json({
-      id: group?.id,
-      name: group?.name,
-      numberOfMembers: group?.members.length,
-      createdAt: group?.createdAt,
-      updatedAt: group?.updatedAt,
-      members: group?.members.map((member) => ({
-        id: member.id,
-        name: member.name,
-        status: member.memberRole,
-      })),
-      leader: {
-        id: leader?.id,
-        name: leader?.name,
-      },
-    });
   } catch (err) {
     if (err instanceof Error) res.status(500).json({ error: err.message });
   }

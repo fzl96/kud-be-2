@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { AuthenticatedRequest } from "../utils/requestType";
+import { AuthenticatedRequest } from "../utils/requestType.js";
 import jwt from "jsonwebtoken";
 
 export const authenticateToken = (

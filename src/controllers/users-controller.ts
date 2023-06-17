@@ -2,7 +2,7 @@ import { Prisma } from "@prisma/client";
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { z } from "zod";
-import { db } from "../lib/db";
+import { db } from "../lib/db.js";
 
 const userSchema = z.object({
   name: z.string().optional(),
@@ -33,6 +33,7 @@ export const getUsers = async (req: Request, res: Response) => {
         createdAt: true,
         updatedAt: true,
       },
+      where: { active: true },
     });
 
     if (!users) {
@@ -136,12 +137,23 @@ export const createUser = async (req: Request, res: Response) => {
   }
 
   try {
+    const existingUser = await db.user.findUnique({
+      where: { username },
+    });
+
+    if (existingUser && existingUser.active) {
+      res.status(400).json({ error: "Username sudah ada" });
+      return;
+    }
+
     // hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
     // create user
-    await db.user.create({
-      data: { name, username, password: hashedPassword, roleId },
+    await db.user.upsert({
+      where: { username },
+      update: { name, active: true, password: hashedPassword, roleId },
+      create: { name, username, password: hashedPassword, roleId },
     });
 
     res.status(201).json({ message: "User dibuat" });
@@ -229,9 +241,31 @@ export const updateUser = async (req: Request, res: Response) => {
 export const deleteUser = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const user = await db.user.delete({
+    const user = await db.user.findUnique({
+      where: { id: id as string },
+      include: {
+        sale: true,
+      },
+    });
+
+    if (!user) {
+      res.status(400).json({ error: "User tidak ditemukan" });
+      return;
+    }
+
+    if (user.sale.length > 0) {
+      await db.user.update({
+        where: { id: id as string },
+        data: {
+          active: false,
+        },
+      });
+    }
+
+    await db.user.delete({
       where: { id: id as string },
     });
+
     res.status(200).json({ message: "User dihapus" });
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
@@ -247,9 +281,37 @@ export const deleteUser = async (req: Request, res: Response) => {
 export const deleteUsers = async (req: Request, res: Response) => {
   const { ids } = req.body;
   try {
-    await db.user.deleteMany({
+    const users = await db.user.findMany({
       where: { id: { in: ids } },
+      include: {
+        sale: true,
+      },
     });
+
+    if (users.length === 0) {
+      res.status(400).json({ error: "User tidak ditemukan" });
+      return;
+    }
+
+    const usersWithSale = users
+      .filter((user) => user.sale.length > 0)
+      .map((user) => user.id);
+    const usersWithoutSale = users
+      .filter((user) => user.sale.length === 0)
+      .map((user) => user.id);
+    if (usersWithSale.length > 0) {
+      await db.user.updateMany({
+        where: { id: { in: usersWithSale } },
+        data: {
+          active: false,
+        },
+      });
+    }
+
+    await db.user.deleteMany({
+      where: { id: { in: usersWithoutSale } },
+    });
+
     res.status(200).json({ message: "User dihapus" });
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {

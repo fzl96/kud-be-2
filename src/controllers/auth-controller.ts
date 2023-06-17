@@ -31,7 +31,7 @@ export const signIn = async (req: Request, res: Response) => {
       },
     });
 
-    if (!user) {
+    if (!user || !user.active) {
       res.status(400).json({ error: "Username atau password salah" });
       return;
     }
@@ -67,8 +67,6 @@ export const signIn = async (req: Request, res: Response) => {
         expiresIn: "7d",
       }
     );
-    console.log(accessToken);
-    console.log(refreshToken);
 
     try {
       await prisma.user.update({
@@ -150,8 +148,6 @@ export const refreshToken = async (req: Request, res: Response) => {
 export const signOut = async (req: Request, res: Response) => {
   const { refreshToken } = req.cookies;
 
-  console.log(refreshToken);
-
   if (!refreshToken) res.sendStatus(204);
 
   try {
@@ -161,7 +157,6 @@ export const signOut = async (req: Request, res: Response) => {
     });
 
     if (!user) {
-      console.log("no user");
       res.sendStatus(204);
     }
 

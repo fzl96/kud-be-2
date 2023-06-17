@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { Request, Response } from "express";
 import { z } from "zod";
-import { db } from "../lib/db";
+import { db } from "../lib/db.js";
 
 const customerSchema = z.object({
   name: z.string().optional(),
@@ -49,6 +49,9 @@ export const getCustomers = async (req: Request, res: Response) => {
 
 export const getCustomer = async (req: Request, res: Response) => {
   const includeSales = req.query.include_sales === "true";
+  const year = req.query.year as string;
+  const month = req.query.month as string;
+
   const { id } = req.params;
   try {
     if (!includeSales) {
@@ -97,11 +100,19 @@ export const getCustomer = async (req: Request, res: Response) => {
           },
         },
         sales: {
+          where: {
+            createdAt: {
+              gte: new Date(`${year}-${month}-01`),
+              lt: new Date(`${year}-${month}-31`),
+            },
+          },
           select: {
             id: true,
             total: true,
             createdAt: true,
             updatedAt: true,
+            paymentMethod: true,
+            status: true,
             products: {
               select: {
                 product: {
@@ -129,6 +140,8 @@ export const getCustomer = async (req: Request, res: Response) => {
         total: sale.total,
         createdAt: sale.createdAt,
         updatedAt: sale.updatedAt,
+        paymentMethod: sale.paymentMethod,
+        status: sale.status,
         products: sale.products.map((product) => {
           return {
             id: product.product.id,

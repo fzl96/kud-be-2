@@ -1,7 +1,7 @@
 import { PrismaClient, Prisma } from "@prisma/client";
 import { Request, Response } from "express";
 import { z } from "zod";
-import { db } from "../lib/db";
+import { db } from "../lib/db.js";
 
 const productSchema = z.object({
   id: z.string().optional(),
@@ -15,6 +15,8 @@ export const getSales = async (req: Request, res: Response) => {
         id: true,
         createdAt: true,
         updatedAt: true,
+        customerType: true,
+        customerName: true,
         total: true,
         paymentMethod: true,
         dueDate: true,
@@ -69,17 +71,29 @@ export const getSale = async (req: Request, res: Response) => {
             name: true,
           },
         },
+        payment: {
+          select: {
+            id: true,
+            amount: true,
+            note: true,
+            createdAt: true,
+          },
+        },
       },
     });
     res.status(200).json({
       id: sale?.id,
       customer: sale?.customer,
+      customerType: sale?.customerType,
+      customerName: sale?.customerName,
       total: sale?.total,
       cash: sale?.cash,
       change: sale?.change,
       paymentMethod: sale?.paymentMethod,
       status: sale?.status,
       dueDate: sale?.dueDate,
+      paid: sale?.paid,
+      payments: sale?.payment,
       products: sale?.products.map((product) => ({
         id: product.productId,
         quantity: product.quantity,
@@ -99,6 +113,7 @@ export const createSale = async (req: Request, res: Response) => {
   try {
     const {
       customerId,
+      customerType,
       products,
       cash,
       change,
@@ -109,7 +124,6 @@ export const createSale = async (req: Request, res: Response) => {
     } = req.body;
     // check if customer and products exist in the request body
     if (!products || !cashierId) {
-      console.log(products, cashierId);
       res.status(400).json({ error: "Data kurang lengkap" });
       return;
     }
@@ -172,6 +186,7 @@ export const createSale = async (req: Request, res: Response) => {
       status,
       dueDate,
       total: total,
+      customerType,
       user: { connect: { id: cashierId } },
       products: {
         create: products.map((product: any) => ({
@@ -224,102 +239,59 @@ export const createSale = async (req: Request, res: Response) => {
 
 export const updateSale = async (req: Request, res: Response) => {
   const { id } = req.params;
-  // const { customerId, products } = req.body;
-  // try {
-  //   // get the price of the products
-  //   const productPrices = await db.product.findMany({
-  //     where: {
-  //       id: {
-  //         in: products.map((product: any) => product.id),
-  //       },
-  //     },
-  //     select: {
-  //       id: true,
-  //       price: true,
-  //     },
-  //   });
+  const { amount, note } = req.body;
 
-  //   const sale = db.sale.update({
-  //     where: { id: id as string },
-  //     data: {
-  //       customer: { connect: { id: customerId } },
-  //       total: products.reduce(
-  //         (acc: number, product: any) =>
-  //           acc +
-  //           productPrices.find((p) => p.id === product.id)?.price! *
-  //             product.quantity,
-  //         0
-  //       ),
-  //     },
-  //   });
+  if (!amount) {
+    res.status(400).json({ error: "Jumlah pembayaran tidak boleh kosong" });
+    return;
+  }
 
-  //   const existingProductSale = await db.productSale.findMany({
-  //     where: {
-  //       saleId: id,
-  //     },
-  //   });
+  try {
+    const sale = await db.sale.findUnique({
+      where: { id: id },
+      include: {
+        payment: true,
+      },
+    });
 
-  //   const productSaleIds = products.map((product: any) => product.id);
+    if (!sale) {
+      res.status(404).json({ error: "Penjualan tidak ditemukan" });
+      return;
+    }
 
-  //   const deleteProductSale = db.productSale.deleteMany({
-  //     where: {
-  //       productId: {
-  //         notIn: productSaleIds,
-  //       },
-  //       saleId: id,
-  //     },
-  //   });
+    if (sale.paymentMethod === "TUNAI") {
+      res.status(400).json({ error: "Penjualan tidak menggunakan kredit" });
+      return;
+    }
 
-  //   const updateProductSale = existingProductSale.filter((productSale) =>
-  //     productSaleIds.includes(productSale.productId)
-  //   );
-  //   // get the products that are not in the database in exisstinProductSale
-  //   const createProductSales = products.filter(
-  //     (product: any) =>
-  //       !existingProductSale
-  //         .map((productSale) => productSale.productId)
-  //         .includes(product.id)
-  //   );
+    if (sale.status === "SELESAI") {
+      res.status(400).json({ error: "Penjualan sudah dibayar" });
+      return;
+    }
 
-  //   const saleResult = await db.$transaction([
-  //     sale,
-  //     deleteProductSale,
-  //     ...updateProductSale.map((productSale) =>
-  //       db.productSale.update({
-  //         where: {
-  //           saleId_productId: {
-  //             saleId: productSale.saleId,
-  //             productId: productSale.productId,
-  //           },
-  //         },
-  //         data: {
-  //           quantity: productSale.quantity,
-  //           total: productSale.total,
-  //         },
-  //       })
-  //     ),
-  //     ...createProductSales.map((productSale: any) => {
-  //       db.productSale.create({
-  //         data: {
-  //           quantity: productSale.quantity,
-  //           productId: productSale.id,
-  //           saleId: id,
-  //           total:
-  //             productPrices.find((p) => p.id === productSale.id)?.price! *
-  //             productSale.quantity,
-  //         },
-  //       });
-  //     }),
-  //   ]);
-  //   res.status(200).json(saleResult[0]);
-  // } catch (err) {
-  //   if (err instanceof Error) {
-  //     console.log(err.message);
+    const dataToUpdate: Prisma.SaleUpdateInput = {
+      paid: sale.paid + amount,
+      payment: {
+        create: {
+          amount: amount,
+          note: note,
+        },
+      },
+    };
 
-  //     res.status(500).json({ error: err.message });
-  //   }
-  // }
-  res.status(400).json({ error: "Data penjualan tidak bisa diubah" });
+    if (sale.paid + amount >= sale.total) {
+      dataToUpdate.status = "SELESAI";
+    }
+
+    const updateSale = await db.sale.update({
+      where: { id: id },
+      data: dataToUpdate,
+    });
+
+    res.status(200).json("Penjualan berhasil diupdate");
+  } catch {
+    res.status(500).json({ error: "Internal server error" });
+  }
 };
 
 export const deleteSale = async (id: string) => {
@@ -343,25 +315,33 @@ export const deleteSale = async (id: string) => {
     },
   });
 
+  const payments = db.creditPayment.deleteMany({
+    where: {
+      saleId: id,
+    },
+  });
+
   const sale = db.sale.delete({
     where: { id: id },
   });
 
-  const [saleDeleted, productSaleDeleted] = await db.$transaction([
-    productSale,
-    sale,
-    ...productQuantity.map((product) => {
-      return db.product.update({
-        where: { id: product.id },
-        data: {
-          stock: {
-            increment: product.quantity,
+  const [productSaleDeleted, paymentsDeleted, saleDeleted] =
+    await db.$transaction([
+      productSale,
+      payments,
+      sale,
+      ...productQuantity.map((product) => {
+        return db.product.update({
+          where: { id: product.id },
+          data: {
+            stock: {
+              increment: product.quantity,
+            },
           },
-        },
-      });
-    }),
-  ]);
-  return { message: "Purchase deleted" };
+        });
+      }),
+    ]);
+  return { message: "Data Penjualan Dihapus" };
 };
 
 export const deleteSales = async (req: Request, res: Response) => {

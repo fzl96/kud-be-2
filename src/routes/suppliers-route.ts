@@ -6,7 +6,7 @@ import {
   updateSupplier,
   deleteSupplier,
   deleteSuppliers,
-} from "../controllers/suppliers-controller";
+} from "../controllers/suppliers-controller.js";
 
 const router = express.Router();
 

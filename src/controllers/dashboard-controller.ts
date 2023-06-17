@@ -1,17 +1,27 @@
 import { Prisma } from "@prisma/client";
 import { Request, Response } from "express";
-import { db } from "../lib/db";
+import { db } from "../lib/db.js";
 
-interface resultData {
+type MonthlyData = {
   month: number;
   totalSales: number;
   totalPurchases: number;
   salesCount: number;
-}
+};
 
-const getData = async (year: number) => {
+type ProductsSale = {
+  productId: string;
+  name: string;
+  sales_count: number;
+  total_quantity: number;
+};
+
+const getData = async (year: number) => {};
+
+export const getSalesData = async (req: Request, res: Response) => {
+  const { year } = req.params;
   try {
-    const result: resultData[] = await db.$queryRaw`
+    const monthly = db.$queryRaw`
     SELECT 
       month, 
       SUM(totalSales) as totalSales, 
@@ -24,11 +34,11 @@ const getData = async (year: number) => {
         NULL as totalPurchases,
         s.id as saleId
       FROM Sale as s
-      WHERE s.createdAt >= ${new Date(year, 0, 1)} AND s.createdAt < ${new Date(
-      year + 1,
-      0,
-      1
-    )}
+      WHERE s.createdAt >= ${new Date(
+        parseInt(year),
+        0,
+        1
+      )} AND s.createdAt < ${new Date(parseInt(year) + 1, 0, 1)}
       UNION ALL
       SELECT 
         EXTRACT(MONTH FROM p.createdAt) as month, 
@@ -36,16 +46,40 @@ const getData = async (year: number) => {
         p.total as totalPurchases,
         NULL as saleId
       FROM Purchase as p
-      WHERE p.createdAt >= ${new Date(year, 0, 1)} AND p.createdAt < ${new Date(
-      year + 1,
-      0,
-      1
-    )}
+      WHERE p.createdAt >= ${new Date(
+        parseInt(year),
+        0,
+        1
+      )} AND p.createdAt < ${new Date(parseInt(year) + 1, 0, 1)}
     ) as subquery
     GROUP BY month;
   `;
-    console.log(result);
-    const data = result.map((item) => {
+
+    const yearly = db.$queryRaw`
+    SELECT
+      ps.productId,
+      p.name,
+      COUNT(ps.productId) AS sales_count,
+      SUM(ps.quantity) AS total_quantity
+    FROM
+      ProductSale ps
+      INNER JOIN Product p ON ps.productId = p.id
+    WHERE
+      EXTRACT(YEAR FROM ps.createdAt) = ${year}
+    GROUP BY
+      ps.productId,
+      p.name
+    ORDER BY
+      sales_count DESC
+    LIMIT 4;
+    `;
+
+    const [result, result2] = (await db.$transaction([monthly, yearly])) as [
+      MonthlyData[],
+      ProductsSale[]
+    ];
+
+    const monthlySales = result.map((item) => {
       return {
         month: Number(item.month),
         revenue: item.totalSales || 0,
@@ -54,60 +88,42 @@ const getData = async (year: number) => {
       };
     });
 
-    return data;
+    const overall = monthlySales.reduce(
+      (acc, item) => {
+        return {
+          revenue: acc.revenue + item.revenue,
+          spending: acc.spending + item.spending,
+          salesCount: acc.salesCount + item.salesCount,
+        };
+      },
+      {
+        revenue: 0,
+        spending: 0,
+        salesCount: 0,
+      }
+    );
+
+    const yearlySales = {
+      ...overall,
+      avgTransaction: overall.revenue / overall.salesCount,
+      products: result2.map((item) => {
+        return {
+          id: item.productId || "",
+          name: item.name || "",
+          salesCount: Number(item.sales_count) || 0,
+          quantityCount: Number(item.total_quantity) || 0,
+        };
+      }),
+    };
+
+    const data = {
+      monthlySales,
+      yearlySales,
+    };
+
+    res.status(200).json(data);
   } catch (err) {
-    console.log(err);
-    return [];
+    console.error(err);
+    res.status(500).json({ message: "Internal server error" });
   }
-
-  // const sales = await db.sale.findMany({
-  //   where: {
-  //     createdAt: {
-  //       gte: new Date(year, 0, 1),
-  //       lt: new Date(year + 1, 0, 1),
-  //     },
-  //   },
-  //   select: {
-  //     id: true,
-  //     total: true,
-  //     createdAt: true,
-  //   },
-  // })
-
-  // const result = [];
-  // if (sales.length === 0) {
-  //   for (let month = 1; month <= 12; month++) {
-  //     const data = {
-  //       month,
-  //       revenue: 0,
-  //       count: 0,
-  //     };
-  //     result.push(data);
-  //   }
-  //   return result;
-  // }
-
-  // for (let month = 1; month <= 12; month++) {
-  //   const monthData = sales.filter((sale) => {
-  //     return new Date(sale.createdAt).getMonth() + 1 === month;
-  //   });
-
-  //   const monthTotal = monthData.reduce((acc, sale) => {
-  //     return acc + sale.total;
-  //   }, 0);
-
-  //   result.push({
-  //     month,
-  //     total: monthTotal,
-  //     count: monthData.length,
-  //   });
-  // }
-
-  // return result
-};
-
-export const getSalesData = async (req: Request, res: Response) => {
-  const { year } = req.params;
-  const data = await getData(Number(year));
-  res.status(200).json(data);
 };

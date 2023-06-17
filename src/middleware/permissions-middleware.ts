@@ -1,5 +1,5 @@
 import { Response, NextFunction } from "express";
-import { AuthenticatedRequest } from "../utils/requestType";
+import { AuthenticatedRequest } from "../utils/requestType.js";
 
 const AdminPermissions = [
   "create_dashboard",

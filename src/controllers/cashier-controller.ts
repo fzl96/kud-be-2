@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
-import { db } from "../lib/db";
+import { db } from "../lib/db.js";
 
 const productSchema = z.object({
   id: z.string().optional(),
@@ -54,6 +54,8 @@ export const postCashier = async (req: Request, res: Response) => {
       status,
       paymentMethod,
       dueDate,
+      customerName,
+      customerType,
     } = req.body;
     // check if customer and products exist in the request body
     if (!products || !cashierId) {
@@ -120,6 +122,8 @@ export const postCashier = async (req: Request, res: Response) => {
       status,
       dueDate,
       total: total,
+      customerName,
+      customerType,
       user: { connect: { id: cashierId } },
       products: {
         create: products.map((product: any) => ({
@@ -133,7 +137,6 @@ export const postCashier = async (req: Request, res: Response) => {
       },
     };
 
-    console.log(customerId);
     if (customerId) createData.customer = { connect: { id: customerId } };
 
     // create the sale

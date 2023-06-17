@@ -1,5 +1,5 @@
 import express from "express";
-import { getCashier, postCashier } from "../controllers/cashier-controller";
+import { getCashier, postCashier } from "../controllers/cashier-controller.js";
 
 const router = express.Router();
 

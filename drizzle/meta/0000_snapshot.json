@@ -1,0 +1,828 @@
+{
+  "id": "00000000-0000-0000-0000-000000000000",
+  "prevId": "",
+  "version": "5",
+  "dialect": "mysql",
+  "tables": {
+    "Category": {
+      "name": "Category",
+      "columns": {
+        "id": {
+          "autoincrement": false,
+          "name": "id",
+          "type": "varchar(191)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "autoincrement": false,
+          "name": "name",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "default": "(CURRENT_TIMESTAMP(3))",
+          "autoincrement": false,
+          "name": "createdAt",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updatedAt": {
+          "autoincrement": false,
+          "name": "updatedAt",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "Category_name_key": {
+          "name": "Category_name_key",
+          "columns": [
+            "name"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {}
+    },
+    "Customer": {
+      "name": "Customer",
+      "columns": {
+        "id": {
+          "autoincrement": false,
+          "name": "id",
+          "type": "varchar(191)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "autoincrement": false,
+          "name": "name",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "phone": {
+          "autoincrement": false,
+          "name": "phone",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "default": "(CURRENT_TIMESTAMP(3))",
+          "autoincrement": false,
+          "name": "createdAt",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updatedAt": {
+          "autoincrement": false,
+          "name": "updatedAt",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "active": {
+          "default": 1,
+          "autoincrement": false,
+          "name": "active",
+          "type": "tinyint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "groupId": {
+          "autoincrement": false,
+          "name": "groupId",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "memberRole": {
+          "default": "'ANGGOTA'",
+          "autoincrement": false,
+          "name": "memberRole",
+          "type": "enum('ANGGOTA','KETUA')",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "groupId": {
+          "name": "groupId",
+          "columns": [
+            "groupId"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {}
+    },
+    "Group": {
+      "name": "Group",
+      "columns": {
+        "id": {
+          "autoincrement": false,
+          "name": "id",
+          "type": "varchar(191)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "autoincrement": false,
+          "name": "name",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "default": "(CURRENT_TIMESTAMP(3))",
+          "autoincrement": false,
+          "name": "createdAt",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updatedAt": {
+          "autoincrement": false,
+          "name": "updatedAt",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "Group_name_key": {
+          "name": "Group_name_key",
+          "columns": [
+            "name"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {}
+    },
+    "Permission": {
+      "name": "Permission",
+      "columns": {
+        "id": {
+          "autoincrement": false,
+          "name": "id",
+          "type": "varchar(191)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "autoincrement": false,
+          "name": "name",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "default": "(CURRENT_TIMESTAMP(3))",
+          "autoincrement": false,
+          "name": "createdAt",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updatedAt": {
+          "autoincrement": false,
+          "name": "updatedAt",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {}
+    },
+    "Product": {
+      "name": "Product",
+      "columns": {
+        "id": {
+          "autoincrement": false,
+          "name": "id",
+          "type": "varchar(191)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "autoincrement": false,
+          "name": "name",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "default": "(CURRENT_TIMESTAMP(3))",
+          "autoincrement": false,
+          "name": "createdAt",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updatedAt": {
+          "autoincrement": false,
+          "name": "updatedAt",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "categoryId": {
+          "autoincrement": false,
+          "name": "categoryId",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stock": {
+          "autoincrement": false,
+          "name": "stock",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "price": {
+          "autoincrement": false,
+          "name": "price",
+          "type": "double",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "active": {
+          "default": 1,
+          "autoincrement": false,
+          "name": "active",
+          "type": "tinyint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "barcode": {
+          "autoincrement": false,
+          "name": "barcode",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "categoryId": {
+          "name": "categoryId",
+          "columns": [
+            "categoryId"
+          ],
+          "isUnique": false
+        },
+        "Product_barcode_key": {
+          "name": "Product_barcode_key",
+          "columns": [
+            "barcode"
+          ],
+          "isUnique": true
+        },
+        "Product_name_key": {
+          "name": "Product_name_key",
+          "columns": [
+            "name"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {}
+    },
+    "ProductSale": {
+      "name": "ProductSale",
+      "columns": {
+        "saleId": {
+          "autoincrement": false,
+          "name": "saleId",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "productId": {
+          "autoincrement": false,
+          "name": "productId",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quantity": {
+          "autoincrement": false,
+          "name": "quantity",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total": {
+          "autoincrement": false,
+          "name": "total",
+          "type": "double",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {
+        "ProductSale_productId_saleId": {
+          "name": "ProductSale_productId_saleId",
+          "columns": [
+            "productId",
+            "saleId"
+          ]
+        }
+      },
+      "indexes": {
+        "productId": {
+          "name": "productId",
+          "columns": [
+            "productId"
+          ],
+          "isUnique": false
+        },
+        "saleId": {
+          "name": "saleId",
+          "columns": [
+            "saleId"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {}
+    },
+    "Purchase": {
+      "name": "Purchase",
+      "columns": {
+        "id": {
+          "autoincrement": false,
+          "name": "id",
+          "type": "varchar(191)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "createdAt": {
+          "default": "(CURRENT_TIMESTAMP(3))",
+          "autoincrement": false,
+          "name": "createdAt",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updatedAt": {
+          "autoincrement": false,
+          "name": "updatedAt",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total": {
+          "autoincrement": false,
+          "name": "total",
+          "type": "double",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "supplierId": {
+          "autoincrement": false,
+          "name": "supplierId",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "supplierId": {
+          "name": "supplierId",
+          "columns": [
+            "supplierId"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {}
+    },
+    "PurchaseItem": {
+      "name": "PurchaseItem",
+      "columns": {
+        "productId": {
+          "autoincrement": false,
+          "name": "productId",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "purchaseId": {
+          "autoincrement": false,
+          "name": "purchaseId",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quantity": {
+          "autoincrement": false,
+          "name": "quantity",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "purchasePrice": {
+          "autoincrement": false,
+          "name": "purchasePrice",
+          "type": "double",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total": {
+          "autoincrement": false,
+          "name": "total",
+          "type": "double",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {
+        "PurchaseItem_productId_purchaseId": {
+          "name": "PurchaseItem_productId_purchaseId",
+          "columns": [
+            "productId",
+            "purchaseId"
+          ]
+        }
+      },
+      "indexes": {
+        "productId": {
+          "name": "productId",
+          "columns": [
+            "productId"
+          ],
+          "isUnique": false
+        },
+        "purchaseId": {
+          "name": "purchaseId",
+          "columns": [
+            "purchaseId"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {}
+    },
+    "Role": {
+      "name": "Role",
+      "columns": {
+        "id": {
+          "autoincrement": false,
+          "name": "id",
+          "type": "varchar(191)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "autoincrement": false,
+          "name": "name",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "default": "(CURRENT_TIMESTAMP(3))",
+          "autoincrement": false,
+          "name": "createdAt",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updatedAt": {
+          "autoincrement": false,
+          "name": "updatedAt",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {}
+    },
+    "Sale": {
+      "name": "Sale",
+      "columns": {
+        "id": {
+          "autoincrement": false,
+          "name": "id",
+          "type": "varchar(191)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "createdAt": {
+          "default": "(CURRENT_TIMESTAMP(3))",
+          "autoincrement": false,
+          "name": "createdAt",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updatedAt": {
+          "autoincrement": false,
+          "name": "updatedAt",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "customerId": {
+          "autoincrement": false,
+          "name": "customerId",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "total": {
+          "autoincrement": false,
+          "name": "total",
+          "type": "double",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cash": {
+          "autoincrement": false,
+          "name": "cash",
+          "type": "double",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "change": {
+          "autoincrement": false,
+          "name": "change",
+          "type": "double",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "userId": {
+          "autoincrement": false,
+          "name": "userId",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "paymentMethod": {
+          "default": "'TUNAI'",
+          "autoincrement": false,
+          "name": "paymentMethod",
+          "type": "enum('TUNAI','KREDIT')",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "default": "'SELESAI'",
+          "autoincrement": false,
+          "name": "status",
+          "type": "enum('SELESAI','PROSES','BATAL')",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dueDate": {
+          "autoincrement": false,
+          "name": "dueDate",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "customerId": {
+          "name": "customerId",
+          "columns": [
+            "customerId"
+          ],
+          "isUnique": false
+        },
+        "userId": {
+          "name": "userId",
+          "columns": [
+            "userId"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {}
+    },
+    "Supplier": {
+      "name": "Supplier",
+      "columns": {
+        "id": {
+          "autoincrement": false,
+          "name": "id",
+          "type": "varchar(191)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "autoincrement": false,
+          "name": "name",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "address": {
+          "autoincrement": false,
+          "name": "address",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "phone": {
+          "autoincrement": false,
+          "name": "phone",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "default": "(CURRENT_TIMESTAMP(3))",
+          "autoincrement": false,
+          "name": "createdAt",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updatedAt": {
+          "autoincrement": false,
+          "name": "updatedAt",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "active": {
+          "default": 1,
+          "autoincrement": false,
+          "name": "active",
+          "type": "tinyint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "Supplier_name_key": {
+          "name": "Supplier_name_key",
+          "columns": [
+            "name"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {}
+    },
+    "User": {
+      "name": "User",
+      "columns": {
+        "id": {
+          "autoincrement": false,
+          "name": "id",
+          "type": "varchar(191)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "username": {
+          "autoincrement": false,
+          "name": "username",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "password": {
+          "autoincrement": false,
+          "name": "password",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "autoincrement": false,
+          "name": "name",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "default": "(CURRENT_TIMESTAMP(3))",
+          "autoincrement": false,
+          "name": "createdAt",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updatedAt": {
+          "autoincrement": false,
+          "name": "updatedAt",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "roleId": {
+          "autoincrement": false,
+          "name": "roleId",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "refreshToken": {
+          "autoincrement": false,
+          "name": "refreshToken",
+          "type": "varchar(400)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "roleId": {
+          "name": "roleId",
+          "columns": [
+            "roleId"
+          ],
+          "isUnique": false
+        },
+        "User_refreshToken_key": {
+          "name": "User_refreshToken_key",
+          "columns": [
+            "refreshToken"
+          ],
+          "isUnique": true
+        },
+        "User_username_key": {
+          "name": "User_username_key",
+          "columns": [
+            "username"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {}
+    },
+    "_PermissionToRole": {
+      "name": "_PermissionToRole",
+      "columns": {
+        "A": {
+          "autoincrement": false,
+          "name": "A",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "B": {
+          "autoincrement": false,
+          "name": "B",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {
+        "_PermissionToRole_A_B": {
+          "name": "_PermissionToRole_A_B",
+          "columns": [
+            "A",
+            "B"
+          ]
+        }
+      },
+      "indexes": {
+        "_PermissionToRole_AB_unique": {
+          "name": "_PermissionToRole_AB_unique",
+          "columns": [
+            "A",
+            "B"
+          ],
+          "isUnique": true
+        },
+        "_PermissionToRole_B_index": {
+          "name": "_PermissionToRole_B_index",
+          "columns": [
+            "B"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {}
+    }
+  },
+  "schemas": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  }
+}
