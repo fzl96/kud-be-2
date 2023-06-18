@@ -15,13 +15,13 @@ export const getPayments = async (req: Request, res: Response) => {
           select: {
             id: true,
             customerName: true,
-            customer: {
+            member: {
               select: {
                 id: true,
                 name: true,
               },
             },
-            paid: true,
+            paidAmount: true,
             paymentMethod: true,
           },
         },
@@ -48,13 +48,13 @@ export const getPayment = async (req: Request, res: Response) => {
           select: {
             id: true,
             customerName: true,
-            customer: {
+            member: {
               select: {
                 id: true,
                 name: true,
               },
             },
-            paid: true,
+            paidAmount: true,
             paymentMethod: true,
           },
         },
@@ -98,7 +98,7 @@ export const createPayment = async (req: Request, res: Response) => {
     }
 
     const dataToUpdate: Prisma.SaleUpdateInput = {
-      paid: sale.paid + amount,
+      paidAmount: sale.paidAmount + amount,
       payment: {
         create: {
           amount: amount,
@@ -107,7 +107,7 @@ export const createPayment = async (req: Request, res: Response) => {
       },
     };
 
-    if (sale.paid + amount >= sale.total) {
+    if (sale.paidAmount + amount >= sale.total) {
       dataToUpdate.status = "SELESAI";
     }
 
@@ -138,7 +138,7 @@ export const updatePayment = async (req: Request, res: Response) => {
         sale: {
           select: {
             id: true,
-            paid: true,
+            paidAmount: true,
             paymentMethod: true,
             status: true,
             total: true,
@@ -152,7 +152,7 @@ export const updatePayment = async (req: Request, res: Response) => {
       return;
     }
 
-    if (payment.sale.paid === null) {
+    if (payment.sale.paidAmount === null) {
       res.status(400).json({ error: "Belum ada pembayaran yang dilakukan" });
       return;
     }
@@ -163,18 +163,21 @@ export const updatePayment = async (req: Request, res: Response) => {
     };
 
     const saleToUpdate: Prisma.SaleUpdateInput = {
-      paid: payment.sale.paid - payment.amount + amount,
+      paidAmount: payment.sale.paidAmount - payment.amount + amount,
     };
 
-    if (payment.sale.paid - payment.amount + amount < 0) {
+    if (payment.sale.paidAmount - payment.amount + amount < 0) {
       res.status(400).json({ error: "Jumlah pembayaran tidak valid" });
       return;
     }
 
-    if (payment.sale.paid - payment.amount + amount >= payment.sale.total) {
+    if (
+      payment.sale.paidAmount - payment.amount + amount >=
+      payment.sale.total
+    ) {
       saleToUpdate.status = "SELESAI";
     } else if (
-      payment.sale.paid - payment.amount + amount <
+      payment.sale.paidAmount - payment.amount + amount <
       payment.sale.total
     ) {
       saleToUpdate.status = "PROSES";
@@ -211,7 +214,7 @@ export const deletePayment = async (req: Request, res: Response) => {
         sale: {
           select: {
             id: true,
-            paid: true,
+            paidAmount: true,
             paymentMethod: true,
             status: true,
             total: true,
@@ -225,7 +228,7 @@ export const deletePayment = async (req: Request, res: Response) => {
       return;
     }
 
-    if (payment.sale.paid === null) {
+    if (payment.sale.paidAmount === null) {
       res.status(400).json({ error: "Pembayaran tidak valid" });
       return;
     }
@@ -233,9 +236,9 @@ export const deletePayment = async (req: Request, res: Response) => {
     const updateSale = db.sale.update({
       where: { id: payment.sale.id },
       data: {
-        paid: payment.sale.paid - payment.amount,
+        paidAmount: payment.sale.paidAmount - payment.amount,
         status:
-          payment.sale.paid - payment.amount < payment.sale.total
+          payment.sale.paidAmount - payment.amount < payment.sale.total
             ? "PROSES"
             : "SELESAI",
       },

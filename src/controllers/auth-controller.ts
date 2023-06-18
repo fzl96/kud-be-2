@@ -21,11 +21,6 @@ export const signIn = async (req: Request, res: Response) => {
           select: {
             id: true,
             name: true,
-            permissions: {
-              select: {
-                name: true,
-              },
-            },
           },
         },
       },

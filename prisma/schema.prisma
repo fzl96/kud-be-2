@@ -28,57 +28,35 @@ model User {
 }
 
 model Role {
-  id          String       @id @default(cuid())
-  name        String
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  User        User[]
-  permissions Permission[]
-}
-
-model Permission {
   id        String   @id @default(cuid())
-  name      String
-  roles     Role[]
+  name      String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  User      User[]
 }
 
-model Customer {
+model Member {
   id         String     @id @default(cuid())
   name       String
   phone      String?
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
   active     Boolean    @default(true)
-  sales      Sale[]
-  Group      Group?     @relation(fields: [groupId], references: [id])
+  group      Group?     @relation(fields: [groupId], references: [id])
   groupId    String?
   memberRole MemberRole @default(ANGGOTA)
+  sales      Sale[]
 
   @@index([groupId], name: "groupId")
-}
-
-enum MemberRole {
-  ANGGOTA
-  KETUA
-}
-
-model Group {
-  id        String     @id @default(cuid())
-  name      String     @unique
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  members   Customer[]
 }
 
 model Sale {
   id            String          @id @default(cuid())
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
-  customer      Customer?       @relation(fields: [customerId], references: [id])
-  customerId    String?
   customerName  String?
+  member        Member?         @relation(fields: [memberId], references: [id])
+  memberId      String?
   total         Float
   cash          Float?
   change        Float?
@@ -87,13 +65,25 @@ model Sale {
   userId        String
   paymentMethod PaymentMethod   @default(TUNAI)
   status        SaleStatus      @default(SELESAI)
-  dueDate       DateTime?
-  paid          Float?
+  paidAmount    Float?
   payment       CreditPayment[]
   customerType  CustomerType    @default(UMUM)
 
-  @@index([customerId], name: "customerId")
+  @@index([memberId], name: "memberId")
   @@index([userId], name: "userId")
+}
+
+enum MemberRole {
+  ANGGOTA
+  KETUA
+}
+
+model Group {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  members   Member[]
 }
 
 enum CustomerType {

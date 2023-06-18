@@ -3,11 +3,6 @@ import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { db } from "../lib/db.js";
 
-const productSchema = z.object({
-  id: z.string().optional(),
-  quantity: z.number().min(0).optional(),
-});
-
 export const getCashier = async (req: Request, res: Response) => {
   try {
     const getProducts = db.product.findMany({
@@ -17,60 +12,60 @@ export const getCashier = async (req: Request, res: Response) => {
         name: true,
         price: true,
         stock: true,
-        createdAt: true,
-        updatedAt: true,
         barcode: true,
-        category: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
       },
     });
-    const getCustomers = db.customer.findMany({
+    const getMembers = db.member.findMany({
       where: { active: true },
+      select: {
+        id: true,
+        name: true,
+      },
     });
     // db transaction
-    const [products, customers] = await db.$transaction([
+    const [products, members] = await db.$transaction([
       getProducts,
-      getCustomers,
+      getMembers,
     ]);
 
-    res.status(200).json({ products, customers });
+    res.status(200).json({ products, members });
   } catch (err) {
     if (err instanceof Error) res.status(500).json({ error: err.message });
   }
 };
 
+const productSchema = z.object({
+  id: z.string(),
+  quantity: z.number().min(1),
+});
+
+const createSaleSchema = z.object({
+  memberId: z.string().optional(),
+  customerType: z.enum(["ANGGOTA", "UMUM"]),
+  products: z.array(productSchema),
+  cash: z.number().min(0).optional(),
+  change: z.number().min(0).optional(),
+  cashierId: z.string(),
+  paymentMethod: z.enum(["TUNAI", "KREDIT"]),
+  customerName: z.string().optional(),
+});
+
 export const postCashier = async (req: Request, res: Response) => {
   try {
     const {
-      customerId,
+      memberId,
       products,
       cash,
       change,
       cashierId,
-      status,
-      paymentMethod,
-      dueDate,
-      customerName,
       customerType,
+      customerName,
+      paymentMethod,
     } = req.body;
-    // check if customer and products exist in the request body
-    if (!products || !cashierId) {
-      console.log(products, cashierId);
-      res.status(400).json({ error: "Data kurang lengkap" });
-      return;
-    }
 
-    const isProductValid = products.every(
-      (product: any) => productSchema.safeParse(product).success
-    );
-
-    // check if the products are valid
-    if (!isProductValid) {
-      res.status(400).json({ error: isProductValid.error.issues });
+    const isValid = createSaleSchema.safeParse(req.body);
+    if (!isValid.success) {
+      res.status(400).json({ error: "Data tidak valid" });
       return;
     }
 
@@ -119,8 +114,7 @@ export const postCashier = async (req: Request, res: Response) => {
       cash,
       change,
       paymentMethod,
-      status,
-      dueDate,
+      status: paymentMethod === "TUNAI" ? "SELESAI" : "PROSES",
       total: total,
       customerName,
       customerType,
@@ -137,7 +131,7 @@ export const postCashier = async (req: Request, res: Response) => {
       },
     };
 
-    if (customerId) createData.customer = { connect: { id: customerId } };
+    if (memberId) createData.member = { connect: { id: memberId } };
 
     // create the sale
     const sale = db.sale.create({
@@ -163,7 +157,7 @@ export const postCashier = async (req: Request, res: Response) => {
     console.log(err);
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
       if (err.code === "P2025") {
-        res.status(404).json({ error: "Customer tidak ditemukan" });
+        res.status(404).json({ error: "Member tidak ditemukan" });
         return;
       } else {
         if (err instanceof Error) {

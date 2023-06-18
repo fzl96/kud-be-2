@@ -4,8 +4,8 @@ import { z } from "zod";
 import { db } from "../lib/db.js";
 
 const productSchema = z.object({
-  id: z.string().optional(),
-  quantity: z.number().min(0).optional(),
+  id: z.string(),
+  quantity: z.number().min(1),
 });
 
 export const getSales = async (req: Request, res: Response) => {
@@ -19,7 +19,6 @@ export const getSales = async (req: Request, res: Response) => {
         customerName: true,
         total: true,
         paymentMethod: true,
-        dueDate: true,
         status: true,
         user: {
           select: {
@@ -27,7 +26,7 @@ export const getSales = async (req: Request, res: Response) => {
             name: true,
           },
         },
-        customer: {
+        member: {
           select: {
             id: true,
             name: true,
@@ -59,7 +58,7 @@ export const getSale = async (req: Request, res: Response) => {
             },
           },
         },
-        customer: {
+        member: {
           select: {
             id: true,
             name: true,
@@ -77,13 +76,14 @@ export const getSale = async (req: Request, res: Response) => {
             amount: true,
             note: true,
             createdAt: true,
+            updatedAt: true,
           },
         },
       },
     });
     res.status(200).json({
       id: sale?.id,
-      customer: sale?.customer,
+      member: sale?.member,
       customerType: sale?.customerType,
       customerName: sale?.customerName,
       total: sale?.total,
@@ -91,13 +91,12 @@ export const getSale = async (req: Request, res: Response) => {
       change: sale?.change,
       paymentMethod: sale?.paymentMethod,
       status: sale?.status,
-      dueDate: sale?.dueDate,
-      paid: sale?.paid,
+      paid: sale?.paidAmount,
       payments: sale?.payment,
       products: sale?.products.map((product) => ({
         id: product.productId,
-        quantity: product.quantity,
         name: product.product.name,
+        quantity: product.quantity,
         total: product.total,
       })),
       cashier: sale?.user,
@@ -109,10 +108,21 @@ export const getSale = async (req: Request, res: Response) => {
   }
 };
 
+const createSaleSchema = z.object({
+  memberId: z.string().optional(),
+  customerType: z.enum(["ANGGOTA", "UMUM"]),
+  products: z.array(productSchema),
+  cash: z.number().min(0).optional(),
+  change: z.number().min(0).optional(),
+  cashierId: z.string(),
+  status: z.enum(["PROSES", "SELESAI"]),
+  paymentMethod: z.enum(["TUNAI", "KREDIT"]),
+});
+
 export const createSale = async (req: Request, res: Response) => {
   try {
     const {
-      customerId,
+      memberId,
       customerType,
       products,
       cash,
@@ -120,21 +130,11 @@ export const createSale = async (req: Request, res: Response) => {
       cashierId,
       status,
       paymentMethod,
-      dueDate,
     } = req.body;
-    // check if customer and products exist in the request body
-    if (!products || !cashierId) {
-      res.status(400).json({ error: "Data kurang lengkap" });
-      return;
-    }
 
-    const isProductValid = products.every(
-      (product: any) => productSchema.safeParse(product).success
-    );
-
-    // check if the products are valid
-    if (!isProductValid) {
-      res.status(400).json({ error: isProductValid.error.issues });
+    const isValid = createSaleSchema.safeParse(req.body);
+    if (!isValid.success) {
+      res.status(400).json({ error: "Data tidak valid" });
       return;
     }
 
@@ -184,7 +184,6 @@ export const createSale = async (req: Request, res: Response) => {
       change,
       paymentMethod,
       status,
-      dueDate,
       total: total,
       customerType,
       user: { connect: { id: cashierId } },
@@ -200,7 +199,7 @@ export const createSale = async (req: Request, res: Response) => {
       },
     };
 
-    if (customerId) createData.customer = { connect: { id: customerId } };
+    if (memberId) createData.member = { connect: { id: memberId } };
 
     // create the sale
     const sale = db.sale.create({
@@ -223,7 +222,6 @@ export const createSale = async (req: Request, res: Response) => {
 
     res.status(201).json("Penjualan berhasil ditambahkan");
   } catch (err) {
-    console.log(err);
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
       if (err.code === "P2025") {
         res.status(404).json({ error: "Customer tidak ditemukan" });
@@ -237,12 +235,23 @@ export const createSale = async (req: Request, res: Response) => {
   }
 };
 
+const updateSaleSchema = z.object({
+  amount: z.number().min(0),
+  note: z.string().optional(),
+});
+
 export const updateSale = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { amount, note } = req.body;
 
   if (!amount) {
     res.status(400).json({ error: "Jumlah pembayaran tidak boleh kosong" });
+    return;
+  }
+
+  const isValid = updateSaleSchema.safeParse(req.body);
+  if (!isValid.success) {
+    res.status(400).json({ error: "Data tidak valid" });
     return;
   }
 
@@ -270,7 +279,7 @@ export const updateSale = async (req: Request, res: Response) => {
     }
 
     const dataToUpdate: Prisma.SaleUpdateInput = {
-      paid: sale.paid + amount,
+      paidAmount: sale.paidAmount + amount,
       payment: {
         create: {
           amount: amount,
@@ -279,7 +288,7 @@ export const updateSale = async (req: Request, res: Response) => {
       },
     };
 
-    if (sale.paid + amount >= sale.total) {
+    if (sale.paidAmount + amount >= sale.total) {
       dataToUpdate.status = "SELESAI";
     }
 
@@ -294,7 +303,7 @@ export const updateSale = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteSale = async (id: string) => {
+export const deleteSaleFn = async (id: string) => {
   // get the products in the sale
   const products = await db.productSale.findMany({
     where: {
@@ -344,10 +353,27 @@ export const deleteSale = async (id: string) => {
   return { message: "Data Penjualan Dihapus" };
 };
 
+export const deleteSale = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  try {
+    const result = await deleteSaleFn(id);
+    res.status(200).json(result);
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      if (err.code === "P2025") {
+        res.status(400).json({ error: "Data tidak ditemukan" });
+        return;
+      } else {
+        res.status(500).json({ error: "Internal Server Error" });
+      }
+    }
+  }
+};
+
 export const deleteSales = async (req: Request, res: Response) => {
   const { ids } = req.body;
   try {
-    const result = await Promise.all(ids.map((id: string) => deleteSale(id)));
+    const result = await Promise.all(ids.map((id: string) => deleteSaleFn(id)));
     res.status(200).json(result);
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {

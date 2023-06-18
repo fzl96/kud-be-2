@@ -23,11 +23,6 @@ export const getUsers = async (req: Request, res: Response) => {
           select: {
             id: true,
             name: true,
-            permissions: {
-              select: {
-                name: true,
-              },
-            },
           },
         },
         createdAt: true,
@@ -50,9 +45,6 @@ export const getUsers = async (req: Request, res: Response) => {
         role: {
           id: user.role.id,
           name: user.role.name,
-          permissions: user.role.permissions.map(
-            (permission) => permission.name
-          ),
         },
       };
     });
@@ -81,11 +73,6 @@ export const getUser = async (req: Request, res: Response) => {
           select: {
             id: true,
             name: true,
-            permissions: {
-              select: {
-                name: true,
-              },
-            },
           },
         },
         createdAt: true,
@@ -103,7 +90,6 @@ export const getUser = async (req: Request, res: Response) => {
       role: {
         id: user.role.id,
         name: user.role.name,
-        permissions: user.role.permissions.map((permission) => permission.name),
       },
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,

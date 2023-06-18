@@ -17,10 +17,6 @@ export const getGroups = async (req: Request, res: Response) => {
       },
     });
 
-    // if (!groups) {
-    //   res.status(200).json(groups);
-    // }
-
     const groupWithLeader = groups.map((group) => {
       const leader = group.members.find(
         (member) => member.memberRole === "KETUA"
@@ -65,6 +61,7 @@ export const getGroup = async (req: Request, res: Response) => {
               id: true,
               name: true,
               memberRole: true,
+              phone: true,
             },
           },
         },
@@ -87,6 +84,7 @@ export const getGroup = async (req: Request, res: Response) => {
           id: member.id,
           name: member.name,
           status: member.memberRole,
+          phone: member.phone,
         })),
         leader: {
           id: leader?.id,
@@ -102,6 +100,7 @@ export const getGroup = async (req: Request, res: Response) => {
               id: true,
               name: true,
               memberRole: true,
+              phone: true,
               sales: {
                 select: {
                   id: true,
@@ -169,7 +168,7 @@ export const createGroup = async (req: Request, res: Response) => {
 
     if (members) {
       // members is an array of customer id, update
-      const customer = await db.customer.updateMany({
+      const member = await db.member.updateMany({
         where: {
           id: {
             in: members,
@@ -183,7 +182,7 @@ export const createGroup = async (req: Request, res: Response) => {
 
     if (leaderId) {
       // Set the leader for the group
-      const leader = await db.customer.update({
+      const leader = await db.member.update({
         where: {
           id: leaderId,
         },
@@ -220,7 +219,7 @@ export const updateGroup = async (req: Request, res: Response) => {
 
     if (members) {
       // members is an array of customer id, update
-      const customer = await db.customer.updateMany({
+      const member = await db.member.updateMany({
         where: {
           id: {
             in: members,
@@ -239,7 +238,7 @@ export const updateGroup = async (req: Request, res: Response) => {
       );
 
       if (currentLeader) {
-        await db.customer.update({
+        await db.member.update({
           where: {
             id: currentLeader.id,
           },
@@ -250,7 +249,7 @@ export const updateGroup = async (req: Request, res: Response) => {
       }
 
       // Set the leader for the group
-      const leader = await db.customer.update({
+      const leader = await db.member.update({
         where: {
           id: leaderId,
         },

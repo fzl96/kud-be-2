@@ -3,19 +3,12 @@ import { Request, Response } from "express";
 import { z } from "zod";
 import { db } from "../lib/db.js";
 
-const customerSchema = z.object({
-  name: z.string().optional(),
-  phone: z.string().optional(),
-  groupId: z.string().optional(),
-  status: z.enum(["ANGGOTA", "KETUA"]).optional(),
-});
-
-export const getCustomers = async (req: Request, res: Response) => {
+export const getMembers = async (req: Request, res: Response) => {
   try {
-    const customers = await db.customer.findMany({
+    const members = await db.member.findMany({
       where: { active: true },
       include: {
-        Group: {
+        group: {
           select: {
             id: true,
             name: true,
@@ -23,31 +16,32 @@ export const getCustomers = async (req: Request, res: Response) => {
         },
       },
     });
-    if (!customers) {
-      res.status(200).json(customers);
+    if (!members) {
+      res.status(200).json(members);
       return;
     }
-    const mappedCustomers = customers.map((customer) => {
+    const mappedMembers = members.map((member) => {
       return {
-        id: customer.id,
-        name: customer.name,
-        phone: customer.phone,
-        createdAt: customer.createdAt,
-        updatedAt: customer.updatedAt,
-        status: customer.memberRole,
+        id: member.id,
+        name: member.name,
+        phone: member.phone,
+        createdAt: member.createdAt,
+        updatedAt: member.updatedAt,
+        status: member.memberRole,
         group: {
-          id: customer.Group?.id,
-          name: customer.Group?.name,
+          id: member.group?.id,
+          name: member.group?.name,
         },
       };
     });
-    res.status(200).json(mappedCustomers);
+    res.status(200).json(mappedMembers);
   } catch (err) {
-    if (err instanceof Error) res.status(500).json({ error: err.message });
+    if (err instanceof Error)
+      res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
-export const getCustomer = async (req: Request, res: Response) => {
+export const getMember = async (req: Request, res: Response) => {
   const includeSales = req.query.include_sales === "true";
   const year = req.query.year as string;
   const month = req.query.month as string;
@@ -55,10 +49,10 @@ export const getCustomer = async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
     if (!includeSales) {
-      const customer = await db.customer.findUnique({
+      const member = await db.member.findUnique({
         where: { id: id as string },
         include: {
-          Group: {
+          group: {
             select: {
               id: true,
               name: true,
@@ -66,25 +60,25 @@ export const getCustomer = async (req: Request, res: Response) => {
           },
         },
       });
-      if (!customer) {
-        res.status(404).json({ error: "Customer tidak ditemukan" });
+      if (!member) {
+        res.status(404).json({ error: "Anggota tidak ditemukan" });
         return;
       }
       res.status(200).json({
-        id: customer.id,
-        name: customer.name,
-        phone: customer.phone,
-        status: customer.memberRole,
-        createdAt: customer.createdAt,
-        updatedAt: customer.updatedAt,
+        id: member.id,
+        name: member.name,
+        phone: member.phone,
+        status: member.memberRole,
+        createdAt: member.createdAt,
+        updatedAt: member.updatedAt,
         group: {
-          id: customer.Group?.id,
-          name: customer.Group?.name,
+          id: member.group?.id,
+          name: member.group?.name,
         },
       });
       return;
     }
-    const customer = await db.customer.findUnique({
+    const member = await db.member.findUnique({
       where: { id: id as string },
       select: {
         id: true,
@@ -93,7 +87,8 @@ export const getCustomer = async (req: Request, res: Response) => {
         createdAt: true,
         updatedAt: true,
         memberRole: true,
-        Group: {
+        active: true,
+        group: {
           select: {
             id: true,
             name: true,
@@ -130,11 +125,11 @@ export const getCustomer = async (req: Request, res: Response) => {
         },
       },
     });
-    if (!customer) {
-      res.status(404).json({ error: "Customer tidak ditemukan" });
+    if (!member) {
+      res.status(404).json({ error: "Anggota tidak ditemukan" });
       return;
     }
-    const mappedSales = customer.sales.map((sale) => {
+    const mappedSales = member.sales.map((sale) => {
       return {
         id: sale.id,
         total: sale.total,
@@ -154,15 +149,15 @@ export const getCustomer = async (req: Request, res: Response) => {
       };
     });
     res.status(200).json({
-      id: customer.id,
-      name: customer.name,
-      phone: customer.phone,
-      status: customer.memberRole,
-      createdAt: customer.createdAt,
-      updatedAt: customer.updatedAt,
+      id: member.id,
+      name: member.name,
+      phone: member.phone,
+      status: member.memberRole,
+      createdAt: member.createdAt,
+      updatedAt: member.updatedAt,
       group: {
-        id: customer.Group?.id,
-        name: customer.Group?.name,
+        id: member.group?.id,
+        name: member.group?.name,
       },
       sales: mappedSales,
     });
@@ -171,7 +166,14 @@ export const getCustomer = async (req: Request, res: Response) => {
   }
 };
 
-export const createCustomer = async (req: Request, res: Response) => {
+const memberCreateSchema = z.object({
+  name: z.string().optional(),
+  phone: z.string().optional(),
+  groupId: z.string(),
+  status: z.enum(["ANGGOTA", "KETUA"]).optional(),
+});
+
+export const createMember = async (req: Request, res: Response) => {
   const { name, phone, groupId, status } = req.body;
 
   if (!name) {
@@ -179,7 +181,7 @@ export const createCustomer = async (req: Request, res: Response) => {
     return;
   }
 
-  const isValid = customerSchema.safeParse(req.body);
+  const isValid = memberCreateSchema.safeParse(req.body);
 
   if (!isValid.success) {
     res.status(400).json({ error: "Data tidak valid" });
@@ -194,7 +196,7 @@ export const createCustomer = async (req: Request, res: Response) => {
       });
 
       if (!group) {
-        res.status(404).json({ error: "Group tidak ditemukan" });
+        res.status(404).json({ error: "Kelompok tidak ditemukan" });
         return;
       }
 
@@ -204,58 +206,61 @@ export const createCustomer = async (req: Request, res: Response) => {
 
       if (leader) {
         // change the leader to member
-        await db.customer.update({
+        await db.member.update({
           where: { id: leader.id },
           data: { memberRole: "ANGGOTA" },
         });
       }
     }
 
-    const dataToCreate: Prisma.CustomerCreateInput = {
+    const dataToCreate: Prisma.MemberCreateInput = {
       name,
       phone,
       memberRole: status,
     };
 
     if (groupId) {
-      dataToCreate.Group = { connect: { id: groupId } };
+      dataToCreate.group = { connect: { id: groupId } };
     }
 
-    const customer = await db.customer.create({
+    const member = await db.member.create({
       data: dataToCreate,
     });
 
-    res.status(201).json(customer);
+    res.status(201).json(member);
   } catch (err) {
-    console.log(err);
     if (err instanceof Error) res.status(500).json({ error: err.message });
   }
 };
 
-export const updateCustomer = async (req: Request, res: Response) => {
+const memberUpdateSchema = z.object({
+  name: z.string().optional(),
+  phone: z.string().optional(),
+  groupId: z.string().optional(),
+  status: z.enum(["ANGGOTA", "KETUA"]).optional(),
+});
+
+export const updateMember = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { name, phone, groupId, status } = req.body;
 
   if (!name && !phone && !groupId && !status) {
-    res
-      .status(400)
-      .json({ error: "Nama dan nomor telepon tidak boleh kosong" });
+    res.status(201).json({ error: "Tidak ada data yang diperbarui" });
     return;
   }
 
-  const isValid = customerSchema.safeParse(req.body);
+  const isValid = memberUpdateSchema.safeParse(req.body);
   if (!isValid.success) {
     res.status(400).json({ error: "Data tidak valid" });
     return;
   }
 
   try {
-    const updateData: Prisma.CustomerUpdateInput = {
-      phone,
-    };
+    const updateData: Prisma.MemberUpdateInput = {};
     if (name) updateData.name = name;
-    if (groupId) updateData.Group = { connect: { id: groupId } };
+    if (groupId) updateData.group = { connect: { id: groupId } };
     if (status) updateData.memberRole = status;
+    if (phone) updateData.phone = phone;
 
     if (groupId && status === "KETUA") {
       const group = await db.group.findUnique({
@@ -274,23 +279,23 @@ export const updateCustomer = async (req: Request, res: Response) => {
 
       if (leader) {
         // change the leader to member
-        await db.customer.update({
+        await db.member.update({
           where: { id: leader.id },
           data: { memberRole: "ANGGOTA" },
         });
       }
     }
 
-    const customer = await db.customer.update({
+    const member = await db.member.update({
       where: { id: id as string },
       data: updateData,
     });
 
-    res.status(200).json(customer);
+    res.status(200).json(member);
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
       if (err.code === "P2025") {
-        res.status(400).json({ error: "Customer tidak ditemukan" });
+        res.status(400).json({ error: "Anggota tidak ditemukan" });
       } else {
         res.status(500).json({ error: err.message });
       }
@@ -298,36 +303,36 @@ export const updateCustomer = async (req: Request, res: Response) => {
   }
 };
 
-const deleteCustomersFn = async (id: string) => {
+const deleteMemberFn = async (id: string) => {
   try {
-    const customer = await db.customer.findUnique({
+    const member = await db.member.findUnique({
       where: { id: id as string },
       include: { sales: true },
     });
 
-    if (!customer) {
-      return { error: "Customer tidak ditemukan" };
+    if (!member) {
+      return { error: "Anggota tidak ditemukan" };
     }
 
-    if (customer.sales.length) {
-      await db.customer.update({
+    if (member.sales.length) {
+      await db.member.update({
         where: { id: id as string },
         data: {
           active: false,
         },
       });
-      return { message: "Customer dihapus" };
+      return { message: "Anggota dihapus" };
     }
 
-    await db.customer.delete({
+    await db.member.delete({
       where: { id: id as string },
     });
 
-    return { message: "Customer dihapus" };
+    return { message: "Anggota dihapus" };
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
       if (err.code === "P2025") {
-        return { error: "Customer tidak ditemukan" };
+        return { error: "Anggota tidak ditemukan" };
       } else {
         return { error: err.message };
       }
@@ -335,9 +340,9 @@ const deleteCustomersFn = async (id: string) => {
   }
 };
 
-export const deleteCustomer = async (req: Request, res: Response) => {
+export const deleteMember = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const result = await deleteCustomersFn(id as string);
+  const result = await deleteMemberFn(id as string);
   if (result?.error) {
     res.status(400).json({ error: result.error });
     return;
@@ -345,15 +350,15 @@ export const deleteCustomer = async (req: Request, res: Response) => {
   res.status(200).json({ message: result?.message });
 };
 
-export const deleteCustomers = async (req: Request, res: Response) => {
+export const deleteMembers = async (req: Request, res: Response) => {
   const { ids } = req.body;
   const results = await Promise.all(
-    ids.map((id: string) => deleteCustomersFn(id))
+    ids.map((id: string) => deleteMemberFn(id))
   );
   const errors = results.filter((result) => result?.error);
   if (errors.length) {
     res.status(400).json({ errors });
     return;
   }
-  res.status(200).json({ message: "Customer dihapus" });
+  res.status(200).json({ message: "Anggota dihapus" });
 };

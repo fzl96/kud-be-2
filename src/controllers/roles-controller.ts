@@ -4,15 +4,7 @@ import { db } from "../lib/db.js";
 
 export const getRoles = async (req: Request, res: Response) => {
   try {
-    const roles = await db.role.findMany({
-      include: {
-        permissions: {
-          select: {
-            name: true,
-          },
-        },
-      },
-    });
+    const roles = await db.role.findMany({});
     if (!roles) {
       res.status(200).json(roles);
     }
@@ -22,7 +14,6 @@ export const getRoles = async (req: Request, res: Response) => {
         name: role.name,
         createdAt: role.createdAt,
         updatedAt: role.updatedAt,
-        permissions: role.permissions.map((permission) => permission.name),
       };
     });
     res.status(200).json(rolesMapped);
@@ -36,13 +27,6 @@ export const getRole = async (req: Request, res: Response) => {
   try {
     const role = await db.role.findUnique({
       where: { id: id as string },
-      include: {
-        permissions: {
-          select: {
-            name: true,
-          },
-        },
-      },
     });
     if (!role) {
       res.status(404).json({ error: "Role tidak ditemukan" });
@@ -53,7 +37,6 @@ export const getRole = async (req: Request, res: Response) => {
       name: role.name,
       createdAt: role.createdAt,
       updatedAt: role.updatedAt,
-      permissions: role.permissions.map((permission) => permission.name),
     });
   } catch (err) {
     if (err instanceof Error) res.status(500).json({ error: err.message });
@@ -75,7 +58,7 @@ export const createRole = async (req: Request, res: Response) => {
 
   try {
     const role = await db.role.create({
-      data: { name, permissions },
+      data: { name },
     });
     res.status(201).json(role);
   } catch (err) {
@@ -91,10 +74,10 @@ export const createRole = async (req: Request, res: Response) => {
 
 export const updateRole = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { name, permissions } = req.body;
+  const { name } = req.body;
 
-  if (!name && permissions.length === 0) {
-    res.status(400).json({ error: "Nama Role dan Hak akses diperlukan" });
+  if (!name) {
+    res.status(400).json({ error: "Nama Role diperlukan" });
     return;
   }
 
@@ -107,7 +90,6 @@ export const updateRole = async (req: Request, res: Response) => {
     const updateData: Prisma.RoleUpdateInput = {};
 
     if (name) updateData.name = name;
-    if (permissions) updateData.permissions = permissions;
 
     const role = await db.role.update({
       where: { id: id as string },
