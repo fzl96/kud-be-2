@@ -54,7 +54,7 @@ export const getGroup = async (req: Request, res: Response) => {
   try {
     if (!includeSales) {
       const group = await db.group.findUnique({
-        where: { id: id as string },
+        where: { id: id },
         include: {
           members: {
             select: {
@@ -93,7 +93,7 @@ export const getGroup = async (req: Request, res: Response) => {
       });
     } else {
       const group = await db.group.findUnique({
-        where: { id: id as string },
+        where: { id: id },
         include: {
           members: {
             select: {
@@ -168,7 +168,7 @@ export const createGroup = async (req: Request, res: Response) => {
 
     if (members) {
       // members is an array of customer id, update
-      const member = await db.member.updateMany({
+      await db.member.updateMany({
         where: {
           id: {
             in: members,
@@ -182,7 +182,7 @@ export const createGroup = async (req: Request, res: Response) => {
 
     if (leaderId) {
       // Set the leader for the group
-      const leader = await db.member.update({
+      await db.member.update({
         where: {
           id: leaderId,
         },
@@ -210,7 +210,7 @@ export const updateGroup = async (req: Request, res: Response) => {
 
   try {
     const group = await db.group.update({
-      where: { id: id as string },
+      where: { id: id },
       data: { name },
       include: {
         members: true,
@@ -219,7 +219,7 @@ export const updateGroup = async (req: Request, res: Response) => {
 
     if (members) {
       // members is an array of customer id, update
-      const member = await db.member.updateMany({
+      await db.member.updateMany({
         where: {
           id: {
             in: members,
@@ -249,7 +249,7 @@ export const updateGroup = async (req: Request, res: Response) => {
       }
 
       // Set the leader for the group
-      const leader = await db.member.update({
+      await db.member.update({
         where: {
           id: leaderId,
         },
@@ -270,7 +270,7 @@ export const deleteGroup = async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
     const group = await db.group.delete({
-      where: { id: id as string },
+      where: { id: id },
     });
 
     res.status(200).json(group);

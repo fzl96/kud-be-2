@@ -4,14 +4,6 @@ import { z } from "zod";
 import { db } from "../lib/db.js";
 import XLSX from "xlsx";
 
-const productSchema = z.object({
-  name: z.string().optional(),
-  price: z.number().positive().optional(),
-  stock: z.number().positive().optional(),
-  categoryId: z.string().optional(),
-  barcode: z.string().optional(),
-});
-
 export const getProducts = async (req: Request, res: Response) => {
   const includeCategories = req.query.include_categories === "true";
   try {
@@ -48,7 +40,7 @@ export const getProduct = async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
     const product = await db.product.findUnique({
-      where: { id: id as string },
+      where: { id: id },
       select: {
         id: true,
         name: true,
@@ -76,17 +68,18 @@ export const getProduct = async (req: Request, res: Response) => {
   }
 };
 
+const createProductSchema = z.object({
+  name: z.string().min(3).max(50),
+  price: z.number().positive(),
+  stock: z.number().min(0),
+  categoryId: z.string(),
+  barcode: z.string(),
+});
+
 export const createProduct = async (req: Request, res: Response) => {
   const { name, categoryId, price, stock, barcode } = req.body;
 
-  if (!name || !categoryId || !price || !stock) {
-    res
-      .status(400)
-      .json({ error: "Nama, Kategori, Harga, dan Stok diperlukan!" });
-    return;
-  }
-
-  const isValid = productSchema.safeParse(req.body);
+  const isValid = createProductSchema.safeParse(req.body);
   if (!isValid.success) {
     res.status(400).json({ error: "Data tidak valid" });
     return;
@@ -97,7 +90,7 @@ export const createProduct = async (req: Request, res: Response) => {
       where: { name: name },
     });
 
-    if (existingProduct && existingProduct.active) {
+    if (existingProduct?.active) {
       res.status(400).json({ error: "Produk sudah ada" });
       return;
     }
@@ -111,7 +104,14 @@ export const createProduct = async (req: Request, res: Response) => {
         category: { connect: { id: categoryId } },
         barcode,
       },
-      create: { name, categoryId, stock, price, active: true, barcode },
+      create: {
+        name,
+        category: { connect: { id: categoryId } },
+        stock,
+        price,
+        active: true,
+        barcode,
+      },
     });
 
     res.status(201).json(product);
@@ -119,6 +119,8 @@ export const createProduct = async (req: Request, res: Response) => {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
       if (err.code === "P2002") {
         res.status(400).json({ error: "Produk sudah ada" });
+      } else if (err.code === "P2025") {
+        res.status(404).json({ error: "Kategori tidak ditemukan" });
       } else {
         res.status(500).json({ error: err.message });
       }
@@ -126,35 +128,50 @@ export const createProduct = async (req: Request, res: Response) => {
   }
 };
 
+const updateProductSchema = z.object({
+  name: z.string().max(50).optional(),
+  price: z.number().positive().optional(),
+  categoryId: z.string().optional(),
+  barcode: z.string().optional(),
+});
+
 export const updateProduct = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { name, categoryId, price, active, barcode } = req.body;
+  const { name, categoryId, price, barcode } = req.body;
 
-  const isValid = productSchema.safeParse(req.body);
+  if (!name && !categoryId && !price && !barcode) {
+    res.status(200).json({ message: "Tidak ada data yang diubah" });
+    return;
+  }
+
+  const isValid = updateProductSchema.safeParse(req.body);
   if (!isValid.success) {
     res.status(400).json({ error: isValid.error.message });
     return;
   }
+
   try {
     const updateData: Prisma.ProductUpdateInput = {};
 
     if (name) updateData.name = name;
     if (categoryId) updateData.category = { connect: { id: categoryId } };
     if (price) updateData.price = price;
-    if (active) updateData.active = active;
     if (barcode) updateData.barcode = barcode;
 
     const product = await db.product.update({
-      where: { id: id as string },
+      where: { id: id },
       data: updateData,
     });
     res.status(200).json(product);
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      console.log(err);
       if (err.code === "P2025") {
         res.status(404).json({ error: "Kategori tidak ditemukan" });
+      } else if (err.code === "P2025") {
+        res.status(404).json({ error: "Produk tidak ditemukan" });
       } else {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: "Internal Server Error" });
       }
     }
   }
@@ -164,7 +181,7 @@ export const deleteProduct = async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
     const product = await db.product.findUnique({
-      where: { id: id as string },
+      where: { id: id },
       include: {
         purchases: true,
         sales: true,
@@ -173,7 +190,7 @@ export const deleteProduct = async (req: Request, res: Response) => {
 
     if (product?.purchases.length || product?.sales.length) {
       await db.product.update({
-        where: { id: id as string },
+        where: { id: id },
         data: { active: false },
       });
       res.status(200).json({ message: "Produk dinonaktifkan" });
@@ -181,7 +198,7 @@ export const deleteProduct = async (req: Request, res: Response) => {
     }
 
     await db.product.delete({
-      where: { id: id as string },
+      where: { id: id },
     });
 
     res.status(200).json({ message: "Produk dihapus" });
@@ -256,14 +273,14 @@ export const exportProducts = async (req: Request, res: Response) => {
     });
 
     const mappedProducts = products.map((product) => ({
-      id: product.id,
-      kategori: product.category.name,
-      nama: product.name,
-      harga: product.price,
-      stok: product.stock,
-      barcode: product.barcode,
-      dibuat: product.createdAt,
-      diubah: product.updatedAt,
+      ID: product.id,
+      Kategori: product.category.name,
+      "Nama Barang": product.name,
+      Harga: product.price,
+      Stok: product.stock,
+      Barcode: product.barcode,
+      "Tanggal Dibuat": product.createdAt,
+      "Tanggal Diperbarui": product.updatedAt,
     }));
 
     const workbook = XLSX.utils.book_new();

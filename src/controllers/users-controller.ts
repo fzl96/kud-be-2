@@ -64,7 +64,7 @@ export const getUser = async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
     const user = await db.user.findUnique({
-      where: { id: id as string },
+      where: { id: id },
       select: {
         id: true,
         name: true,
@@ -127,7 +127,7 @@ export const createUser = async (req: Request, res: Response) => {
       where: { username },
     });
 
-    if (existingUser && existingUser.active) {
+    if (existingUser?.active) {
       res.status(400).json({ error: "Username sudah ada" });
       return;
     }
@@ -189,7 +189,7 @@ export const updateUser = async (req: Request, res: Response) => {
       }
 
       const user = await db.user.findUnique({
-        where: { id: id as string },
+        where: { id: id },
         select: { password: true },
       });
       if (!user) {
@@ -208,7 +208,7 @@ export const updateUser = async (req: Request, res: Response) => {
     if (roleId) updateData.role = { connect: { id: roleId } };
 
     await db.user.update({
-      where: { id: id as string },
+      where: { id: id },
       data: updateData,
     });
 
@@ -228,7 +228,7 @@ export const deleteUser = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const user = await db.user.findUnique({
-      where: { id: id as string },
+      where: { id: id },
       include: {
         sale: true,
       },
@@ -241,7 +241,7 @@ export const deleteUser = async (req: Request, res: Response) => {
 
     if (user.sale.length > 0) {
       await db.user.update({
-        where: { id: id as string },
+        where: { id: id },
         data: {
           active: false,
         },
@@ -249,7 +249,7 @@ export const deleteUser = async (req: Request, res: Response) => {
     }
 
     await db.user.delete({
-      where: { id: id as string },
+      where: { id: id },
     });
 
     res.status(200).json({ message: "User dihapus" });

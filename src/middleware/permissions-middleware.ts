@@ -116,7 +116,7 @@ export const authorizeCategories = (
 
   const userPermissions =
     permissions.find((permission) => permission.role === req.user.role.name)
-      ?.permissions || [];
+      ?.permissions ?? [];
 
   if (!userPermissions.includes(requiredPermission)) {
     return res.status(403).json({ error: "Anda tidak memiliki akses." });
@@ -150,7 +150,7 @@ export const authorizeProducts = (
   }
   const userPermissions =
     permissions.find((permission) => permission.role === req.user.role.name)
-      ?.permissions || [];
+      ?.permissions ?? [];
 
   if (!userPermissions.includes(requiredPermission)) {
     return res.status(403).json({ error: "Anda tidak memiliki akses." });
@@ -185,7 +185,7 @@ export const authorizeUsers = (
 
   const userPermissions =
     permissions.find((permission) => permission.role === req.user.role.name)
-      ?.permissions || [];
+      ?.permissions ?? [];
 
   if (!userPermissions.includes(requiredPermission)) {
     return res.status(403).json({ error: "Anda tidak memiliki akses." });
@@ -220,7 +220,7 @@ export const authorizeRoles = (
 
   const userPermissions =
     permissions.find((permission) => permission.role === req.user.role.name)
-      ?.permissions || [];
+      ?.permissions ?? [];
 
   if (!userPermissions.includes(requiredPermission)) {
     return res.status(403).json({ error: "Anda tidak memiliki akses." });
@@ -254,7 +254,7 @@ export const authorizeSales = (
   }
   const userPermissions =
     permissions.find((permission) => permission.role === req.user.role.name)
-      ?.permissions || [];
+      ?.permissions ?? [];
 
   if (!userPermissions.includes(requiredPermission)) {
     return res.status(403).json({ error: "Anda tidak memiliki akses." });
@@ -289,7 +289,7 @@ export const authorizeDashboard = (
 
   const userPermissions =
     permissions.find((permission) => permission.role === req.user.role.name)
-      ?.permissions || [];
+      ?.permissions ?? [];
 
   if (!userPermissions.includes(requiredPermission)) {
     return res.status(403).json({ error: "Anda tidak memiliki akses." });
@@ -323,7 +323,7 @@ export const authorizeSuppliers = (
   }
   const userPermissions =
     permissions.find((permission) => permission.role === req.user.role.name)
-      ?.permissions || [];
+      ?.permissions ?? [];
 
   if (!userPermissions.includes(requiredPermission)) {
     return res.status(403).json({ error: "Anda tidak memiliki akses." });
@@ -358,7 +358,7 @@ export const authorizeCustomers = (
 
   const userPermissions =
     permissions.find((permission) => permission.role === req.user.role.name)
-      ?.permissions || [];
+      ?.permissions ?? [];
 
   if (!userPermissions.includes(requiredPermission)) {
     return res.status(403).json({ error: "Anda tidak memiliki akses." });
@@ -393,7 +393,7 @@ export const authorizePurchases = (
 
   const userPermissions =
     permissions.find((permission) => permission.role === req.user.role.name)
-      ?.permissions || [];
+      ?.permissions ?? [];
 
   if (!userPermissions.includes(requiredPermission)) {
     return res.status(403).json({ error: "Anda tidak memiliki akses." });
@@ -422,7 +422,7 @@ export const authorizeCashier = (
 
   const userPermissions =
     permissions.find((permission) => permission.role === req.user.role.name)
-      ?.permissions || [];
+      ?.permissions ?? [];
 
   if (!userPermissions.includes(requiredPermission)) {
     return res.status(403).json({ error: "Anda tidak memiliki akses." });

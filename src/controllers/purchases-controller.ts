@@ -93,7 +93,7 @@ export const getPurchase = async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
     const purchase = await db.purchase.findUnique({
-      where: { id: id as string },
+      where: { id: id },
       include: {
         products: {
           select: {
@@ -148,7 +148,7 @@ export const createPurchase = async (req: Request, res: Response) => {
   }
 
   try {
-    const itemArray = purchaseItemSchema.array().parse(items);
+    purchaseItemSchema.array().parse(items);
   } catch (err) {
     console.log(err);
     if (err instanceof Error)
@@ -218,7 +218,7 @@ export const updatePurchase = async (req: Request, res: Response) => {
   }
 
   try {
-    const itemArray = purchaseItemSchema.array().parse(items);
+    purchaseItemSchema.array().parse(items);
   } catch (err) {
     if (err instanceof Error)
       res.status(400).json({ error: "Data tidak valid" });
@@ -228,7 +228,7 @@ export const updatePurchase = async (req: Request, res: Response) => {
   try {
     const previousPurchaseItem = await db.purchaseItem.findMany({
       where: {
-        purchaseId: id as string,
+        purchaseId: id,
       },
     });
 
@@ -262,7 +262,7 @@ export const updatePurchase = async (req: Request, res: Response) => {
         update: itemToUpdate.map((item: any) => ({
           where: {
             purchaseId_productId: {
-              purchaseId: id as string,
+              purchaseId: id,
               productId: item.id,
             },
           },
@@ -274,7 +274,7 @@ export const updatePurchase = async (req: Request, res: Response) => {
         })),
         delete: itemToDelete.map((item) => ({
           purchaseId_productId: {
-            purchaseId: id as string,
+            purchaseId: id,
             productId: item.productId,
           },
         })),
@@ -286,7 +286,7 @@ export const updatePurchase = async (req: Request, res: Response) => {
     }
 
     const purchase = db.purchase.update({
-      where: { id: id as string },
+      where: { id: id },
       data: updateData,
     });
 
@@ -351,14 +351,14 @@ export const updatePurchase = async (req: Request, res: Response) => {
 const deletePurchase = async (id: string) => {
   const previousPurchaseItem = await db.purchaseItem.findMany({
     where: {
-      purchaseId: id as string,
+      purchaseId: id,
     },
   });
 
   if (!previousPurchaseItem) {
     await db.purchase.delete({
       where: {
-        id: id as string,
+        id: id,
       },
     });
   }
@@ -379,14 +379,14 @@ const deletePurchase = async (id: string) => {
 
     db.purchaseItem.deleteMany({
       where: {
-        purchaseId: id as string,
+        purchaseId: id,
       },
     }),
     db.purchase.delete({
-      where: { id: id as string },
+      where: { id: id },
     }),
   ]);
-  return { message: "Purchase deleted" };
+  return { message: "Purchase deleted", result };
 };
 
 export const deletePurchases = async (req: Request, res: Response) => {

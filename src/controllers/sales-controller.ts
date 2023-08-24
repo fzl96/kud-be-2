@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { Request, Response } from "express";
 import { z } from "zod";
 import { db } from "../lib/db.js";
@@ -44,7 +44,7 @@ export const getSale = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const sale = await db.sale.findUnique({
-      where: { id: id as string },
+      where: { id: id },
       include: {
         products: {
           select: {
@@ -172,11 +172,9 @@ export const createSale = async (req: Request, res: Response) => {
       0
     );
 
-    if (cash) {
-      if (total > cash) {
-        res.status(400).json({ error: "Uang tidak cukup" });
-        return;
-      }
+    if (cash && total > cash) {
+      res.status(400).json({ error: "Uang tidak cukup" });
+      return;
     }
 
     const createData: Prisma.SaleCreateInput = {
@@ -206,7 +204,7 @@ export const createSale = async (req: Request, res: Response) => {
       data: createData,
     });
 
-    const result = await db.$transaction([
+    await db.$transaction([
       sale,
       ...products.map((product: any) => {
         return db.product.update({
@@ -220,7 +218,7 @@ export const createSale = async (req: Request, res: Response) => {
       }),
     ]);
 
-    res.status(201).json("Penjualan berhasil ditambahkan");
+    res.status(201).json({ message: "Penjualan berhasil ditambahkan" });
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
       if (err.code === "P2025") {
@@ -297,7 +295,9 @@ export const updateSale = async (req: Request, res: Response) => {
       data: dataToUpdate,
     });
 
-    res.status(200).json("Penjualan berhasil diupdate");
+    res
+      .status(200)
+      .json({ message: "Penjualan berhasil diupdate", updateSale });
   } catch {
     res.status(500).json({ error: "Internal server error" });
   }
@@ -350,7 +350,12 @@ export const deleteSaleFn = async (id: string) => {
         });
       }),
     ]);
-  return { message: "Data Penjualan Dihapus" };
+  return {
+    message: "Data Penjualan Dihapus",
+    productSaleDeleted,
+    paymentsDeleted,
+    saleDeleted,
+  };
 };
 
 export const deleteSale = async (req: Request, res: Response) => {

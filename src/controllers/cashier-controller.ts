@@ -30,7 +30,8 @@ export const getCashier = async (req: Request, res: Response) => {
 
     res.status(200).json({ products, members });
   } catch (err) {
-    if (err instanceof Error) res.status(500).json({ error: err.message });
+    if (err instanceof Error)
+      res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -82,6 +83,11 @@ export const postCashier = async (req: Request, res: Response) => {
         stock: true,
       },
     });
+
+    if (!productPrices) {
+      res.status(400).json({ error: "Barang tidak ditemukan" });
+      return;
+    }
 
     // check if the product is in stock
     const isProductInStock = products.every(
@@ -152,7 +158,7 @@ export const postCashier = async (req: Request, res: Response) => {
       }),
     ]);
 
-    res.status(201).json("Penjualan berhasil ditambahkan");
+    res.status(201).json({ message: "Penjualan berhasil ditambahkan", result });
   } catch (err) {
     console.log(err);
     if (err instanceof Prisma.PrismaClientKnownRequestError) {

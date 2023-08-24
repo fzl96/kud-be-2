@@ -1,4 +1,3 @@
-import { Prisma } from "@prisma/client";
 import { Request, Response } from "express";
 import { db } from "../lib/db.js";
 
@@ -15,8 +14,6 @@ type ProductsSale = {
   sales_count: number;
   total_quantity: number;
 };
-
-const getData = async (year: number) => {};
 
 export const getSalesData = async (req: Request, res: Response) => {
   const { year } = req.params;

@@ -26,7 +26,7 @@ export const signIn = async (req: Request, res: Response) => {
       },
     });
 
-    if (!user || !user.active) {
+    if (!user?.active) {
       res.status(400).json({ error: "Username atau password salah" });
       return;
     }
@@ -116,9 +116,7 @@ export const refreshToken = async (req: Request, res: Response) => {
           name: user.name,
           username: user.username,
           role: {
-            id: user.role.id,
             name: user.role.name,
-            permissions: user.role.permissions,
           },
         };
 

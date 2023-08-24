@@ -1,0 +1,192 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table User {
+  id String [pk]
+  name String [not null]
+  username String [unique, not null]
+  password String [not null]
+  role Role [not null]
+  roleId String [not null]
+  sale Sale [not null]
+  refreshToken String [unique]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  active Boolean [not null, default: true]
+}
+
+Table Role {
+  id String [pk]
+  name String [unique, not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  User User [not null]
+}
+
+Table Member {
+  id String [pk]
+  name String [not null]
+  phone String
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  active Boolean [not null, default: true]
+  group Group
+  groupId String
+  memberRole MemberRole [not null, default: 'ANGGOTA']
+  sales Sale [not null]
+}
+
+Table Sale {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  customerName String
+  member Member
+  memberId String
+  total Float [not null]
+  cash Float
+  change Float
+  products ProductSale [not null]
+  user User [not null]
+  userId String [not null]
+  paymentMethod PaymentMethod [not null, default: 'TUNAI']
+  status SaleStatus [not null, default: 'SELESAI']
+  paidAmount Float
+  payment CreditPayment [not null]
+  customerType CustomerType [not null, default: 'UMUM']
+}
+
+Table Group {
+  id String [pk]
+  name String [unique, not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  members Member [not null]
+}
+
+Table CreditPayment {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  saleId String [not null]
+  sale Sale [not null]
+  amount Float [not null]
+  note String
+}
+
+Table Product {
+  id String [pk]
+  name String [unique, not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  categoryId String [not null]
+  category Category [not null]
+  stock Int [not null]
+  price Float [not null]
+  active Boolean [not null, default: true]
+  sales ProductSale [not null]
+  purchases PurchaseItem [not null]
+  barcode String [unique]
+}
+
+Table ProductSale {
+  saleId String [not null]
+  sale Sale [not null]
+  productId String [not null]
+  product Product [not null]
+  quantity Int [not null]
+  total Float [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+
+  indexes {
+    (saleId, productId) [pk]
+  }
+}
+
+Table Category {
+  id String [pk]
+  name String [unique, not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  products Product [not null]
+}
+
+Table Supplier {
+  id String [pk]
+  name String [unique, not null]
+  address String
+  phone String
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  active Boolean [not null, default: true]
+  purchases Purchase [not null]
+}
+
+Table Purchase {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  total Float [not null]
+  supplierId String [not null]
+  supplier Supplier [not null]
+  products PurchaseItem [not null]
+}
+
+Table PurchaseItem {
+  productId String [not null]
+  product Product [not null]
+  purchaseId String [not null]
+  Purchase Purchase [not null]
+  quantity Int [not null]
+  purchasePrice Float [not null]
+  total Float [not null]
+
+  indexes {
+    (purchaseId, productId) [pk]
+  }
+}
+
+Enum MemberRole {
+  ANGGOTA
+  KETUA
+}
+
+Enum CustomerType {
+  UMUM
+  ANGGOTA
+}
+
+Enum SaleStatus {
+  SELESAI
+  PROSES
+  BATAL
+}
+
+Enum PaymentMethod {
+  TUNAI
+  KREDIT
+}
+
+Ref: User.roleId > Role.id
+
+Ref: Member.groupId > Group.id
+
+Ref: Sale.memberId > Member.id
+
+Ref: Sale.userId > User.id
+
+Ref: CreditPayment.saleId > Sale.id
+
+Ref: Product.categoryId > Category.id
+
+Ref: ProductSale.saleId > Sale.id
+
+Ref: ProductSale.productId > Product.id
+
+Ref: Purchase.supplierId > Supplier.id
+
+Ref: PurchaseItem.productId > Product.id
+
+Ref: PurchaseItem.purchaseId > Purchase.id

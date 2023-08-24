@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express";
+import { NextFunction, Response } from "express";
 import { AuthenticatedRequest } from "../utils/requestType.js";
 import jwt from "jsonwebtoken";
 
@@ -8,7 +8,7 @@ export const authenticateToken = (
   next: NextFunction
 ) => {
   const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader?.split(" ")[1];
+  const token = authHeader?.split(" ")[1];
 
   if (!token) {
     res.status(401).json({ error: "Unauthorized" });

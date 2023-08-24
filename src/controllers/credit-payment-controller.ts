@@ -37,7 +37,7 @@ export const getPayment = async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
     const payment = await db.creditPayment.findUnique({
-      where: { id: id as string },
+      where: { id: id },
       select: {
         id: true,
         createdAt: true,
@@ -111,12 +111,12 @@ export const createPayment = async (req: Request, res: Response) => {
       dataToUpdate.status = "SELESAI";
     }
 
-    const updateSale = await db.sale.update({
+    await db.sale.update({
       where: { id: saleId },
       data: dataToUpdate,
     });
 
-    res.status(200).json("Pembayaran berhasil ditambahkan");
+    res.status(200).json({ message: "Pembayaran berhasil ditambahkan" });
   } catch {
     res.status(500).json({ error: "Internal server error" });
   }
@@ -133,7 +133,7 @@ export const updatePayment = async (req: Request, res: Response) => {
 
   try {
     const payment = await db.creditPayment.findUnique({
-      where: { id: id as string },
+      where: { id: id },
       include: {
         sale: {
           select: {
@@ -189,7 +189,7 @@ export const updatePayment = async (req: Request, res: Response) => {
     });
 
     const updatePayment = db.creditPayment.update({
-      where: { id: id as string },
+      where: { id: id },
       data: dataToUpdate,
     });
 
@@ -198,7 +198,11 @@ export const updatePayment = async (req: Request, res: Response) => {
       updatePayment,
     ]);
 
-    res.status(200).json("Pembayaran berhasil diupdate");
+    res.status(200).json({
+      message: "Pembayaran berhasil diupdate",
+      updatedSale,
+      updatedPayment,
+    });
   } catch {
     res.status(500).json({ error: "Internal server error" });
   }
@@ -209,7 +213,7 @@ export const deletePayment = async (req: Request, res: Response) => {
 
   try {
     const payment = await db.creditPayment.findUnique({
-      where: { id: id as string },
+      where: { id: id },
       include: {
         sale: {
           select: {
@@ -245,7 +249,7 @@ export const deletePayment = async (req: Request, res: Response) => {
     });
 
     const deletePayment = db.creditPayment.delete({
-      where: { id: id as string },
+      where: { id: id },
     });
 
     const [daymentDeleted, saleUpdated] = await db.$transaction([
@@ -253,7 +257,11 @@ export const deletePayment = async (req: Request, res: Response) => {
       deletePayment,
     ]);
 
-    res.status(200).json("Pembayaran berhasil dihapus");
+    res.status(200).json({
+      message: "Pembayaran berhasil dihapus",
+      daymentDeleted,
+      saleUpdated,
+    });
   } catch {
     res.status(500).json({ error: "Internal server error" });
   }

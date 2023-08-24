@@ -17,7 +17,7 @@ export const getSupplier = async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
     const supplier = await db.supplier.findUnique({
-      where: { id: id as string },
+      where: { id: id },
     });
     if (!supplier) {
       res.status(404).json({ error: "Supplier tidak ditemukan" });
@@ -97,14 +97,14 @@ export const updateSupplier = async (req: Request, res: Response) => {
 
   try {
     const supplier = await db.supplier.update({
-      where: { id: id as string },
+      where: { id: id },
       data: {
         name,
         address,
         phone,
       },
     });
-    res.status(200).json({ message: "Supplier updated" });
+    res.status(200).json({ message: "Supplier updated", supplier });
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
       if (err.code === "P2025") {
@@ -119,7 +119,7 @@ export const updateSupplier = async (req: Request, res: Response) => {
 const deleteSupplierFn = async (id: string) => {
   try {
     const supplier = await db.supplier.findUnique({
-      where: { id: id as string },
+      where: { id: id },
       include: { purchases: true },
     });
 
@@ -129,7 +129,7 @@ const deleteSupplierFn = async (id: string) => {
 
     if (supplier.purchases.length > 0) {
       await db.supplier.update({
-        where: { id: id as string },
+        where: { id: id },
         data: {
           active: false,
         },
@@ -139,7 +139,7 @@ const deleteSupplierFn = async (id: string) => {
     }
 
     await db.supplier.delete({
-      where: { id: id as string },
+      where: { id: id },
     });
 
     return { message: "Supplier dihapus" };
@@ -156,7 +156,7 @@ const deleteSupplierFn = async (id: string) => {
 
 export const deleteSupplier = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const result = await deleteSupplierFn(id as string);
+  const result = await deleteSupplierFn(id);
   if (result?.error) {
     res.status(400).json({ error: result.error });
     return;

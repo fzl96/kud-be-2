@@ -50,7 +50,7 @@ export const getMember = async (req: Request, res: Response) => {
   try {
     if (!includeSales) {
       const member = await db.member.findUnique({
-        where: { id: id as string },
+        where: { id: id },
         include: {
           group: {
             select: {
@@ -79,7 +79,7 @@ export const getMember = async (req: Request, res: Response) => {
       return;
     }
     const member = await db.member.findUnique({
-      where: { id: id as string },
+      where: { id: id },
       select: {
         id: true,
         name: true,
@@ -191,7 +191,7 @@ export const createMember = async (req: Request, res: Response) => {
   try {
     if (groupId && status === "KETUA") {
       const group = await db.group.findUnique({
-        where: { id: groupId as string },
+        where: { id: groupId },
         include: { members: true },
       });
 
@@ -264,7 +264,7 @@ export const updateMember = async (req: Request, res: Response) => {
 
     if (groupId && status === "KETUA") {
       const group = await db.group.findUnique({
-        where: { id: groupId as string },
+        where: { id: groupId },
         include: { members: true },
       });
 
@@ -287,7 +287,7 @@ export const updateMember = async (req: Request, res: Response) => {
     }
 
     const member = await db.member.update({
-      where: { id: id as string },
+      where: { id: id },
       data: updateData,
     });
 
@@ -306,7 +306,7 @@ export const updateMember = async (req: Request, res: Response) => {
 const deleteMemberFn = async (id: string) => {
   try {
     const member = await db.member.findUnique({
-      where: { id: id as string },
+      where: { id: id },
       include: { sales: true },
     });
 
@@ -316,7 +316,7 @@ const deleteMemberFn = async (id: string) => {
 
     if (member.sales.length) {
       await db.member.update({
-        where: { id: id as string },
+        where: { id: id },
         data: {
           active: false,
         },
@@ -325,7 +325,7 @@ const deleteMemberFn = async (id: string) => {
     }
 
     await db.member.delete({
-      where: { id: id as string },
+      where: { id: id },
     });
 
     return { message: "Anggota dihapus" };
@@ -342,7 +342,7 @@ const deleteMemberFn = async (id: string) => {
 
 export const deleteMember = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const result = await deleteMemberFn(id as string);
+  const result = await deleteMemberFn(id);
   if (result?.error) {
     res.status(400).json({ error: result.error });
     return;
