@@ -46,11 +46,11 @@ export const createSupplier = async (req: Request, res: Response) => {
       where: { name: name },
     });
 
-    if (exist) {
+    if (exist?.active) {
       res.status(400).json({ error: "Nama supplier sudah terdaftar" });
       return;
     }
-
+    
     const updateData: Prisma.SupplierUpdateInput = {
       active: true,
     };
