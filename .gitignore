@@ -5,5 +5,4 @@ node_modules
 test-results
 sonar-project.properties
 .scannerwork
-prisma/seed.ts
-prisma/dbml
+prisma/dbml/schema.dbml
