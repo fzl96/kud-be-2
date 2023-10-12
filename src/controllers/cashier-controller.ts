@@ -70,6 +70,11 @@ export const postCashier = async (req: Request, res: Response) => {
       return;
     }
 
+    if (customerType.toUpperCase() === "UMUM" && !customerName) {
+      res.status(400).json({ error: "Nama pelanggan harus diisi" });
+      return;
+    }
+
     // get the price of the products
     const productPrices = await db.product.findMany({
       where: {
