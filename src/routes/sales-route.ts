@@ -4,6 +4,7 @@ import {
   getSale,
   createSale,
   updateSale,
+  deleteSale,
   deleteSales,
 } from "../controllers/sales-controller.js";
 
@@ -13,6 +14,7 @@ router.get("/", getSales);
 router.get("/:id", getSale);
 router.post("/", createSale);
 router.put("/:id", updateSale);
+router.delete("/:id", deleteSale);
 router.delete("/", deleteSales);
 
 export default router;
