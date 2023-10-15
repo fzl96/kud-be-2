@@ -40,8 +40,8 @@ export const getCategories = async (req: Request, res: Response) => {
     ]);
 
     const pagination = createPagination({
-      page: page as string,
-      pageSize: pageSize as string,
+      page: Number(page),
+      pageSize: Number(pageSize),
       total: categoriesCount,
       url: `${process.env.API_URL}/categories`,
     })
