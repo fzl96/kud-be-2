@@ -11,6 +11,28 @@ export const getCategories = async (req: Request, res: Response) => {
   try {
     const categories = await db.category.findMany();
     res.status(200).json(categories);
+    const categories = db.category.findMany({
+      where,
+      skip,
+      take,
+      
+    });
+    const count = db.category.count({
+      where,
+    });
+    const [categoriesData, categoriesCount] = await Promise.all([
+      categories,
+      count,
+    ]);
+
+    const pagination = createPagination({
+      page: page as string,
+      pageSize: pageSize as string,
+      total: categoriesCount,
+      url: `${process.env.API_URL}/categories`,
+    })
+    
+    res.status(200).json({pagination, data: categoriesData});
   } catch (err) {
     if (err instanceof Error) res.status(500).json({ error: err.message });
   }
