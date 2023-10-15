@@ -52,6 +52,7 @@ export const getCategories = async (req: Request, res: Response) => {
   }
 };
 
+
 export const getCategory = async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
@@ -164,8 +165,6 @@ export const deleteCategory = async (req: Request, res: Response) => {
 export const deleteCategories = async (req: Request, res: Response) => {
   const { ids } = req.body;
   try {
-    const categories = await db.category.deleteMany({
-      where: { id: { in: ids } },
     // check if ids only one, then delete one
     if (ids.length === 1) {
       await db.category.delete({
