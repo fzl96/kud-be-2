@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { z } from "zod";
 import { db } from "../lib/db.js";
+import { createPagination } from "../utils/pagination.js";
 
 const userSchema = z.object({
   name: z.string().optional(),
@@ -13,8 +14,26 @@ const userSchema = z.object({
 
 export const getUsers = async (req: Request, res: Response) => {
   const includeRoles = req.query.include_roles === "true";
+  const { page, pageSize = 10, search } = req.query;
+  let skip, take
+
+  if (page) {
+    skip = (Number(page) - 1) * Number(pageSize);
+    take = Number(pageSize);
+  }
+
+  const where = { active: true } as Prisma.UserWhereInput;
+  if (search) {
+    where.OR = [
+      { name: { contains: search as string } },
+      { username: { contains: search as string } },
+      { role: { name: { contains: search as string } } },
+    ]
+  }
+  
   try {
-    const users = await db.user.findMany({
+    const users = db.user.findMany({
+      where,
       select: {
         id: true,
         name: true,
@@ -28,14 +47,27 @@ export const getUsers = async (req: Request, res: Response) => {
         createdAt: true,
         updatedAt: true,
       },
-      where: { active: true },
+      skip,
+      take,
     });
 
-    if (!users) {
-      res.status(404).json(users);
-      return;
-    }
-    const mappedUsers = users.map((user) => {
+    const count = db.user.count({
+      where,
+    });
+
+    const [usersData, usersCount] = await Promise.all([
+      users,
+      count,
+    ]);
+
+    const pagination = createPagination({
+      page: Number(page),
+      pageSize: Number(pageSize),
+      total: usersCount,
+      url: `${process.env.API_URL}/users`,
+    })
+
+    const mappedUsers = usersData.map((user) => {
       return {
         id: user.id,
         name: user.name,
@@ -51,10 +83,16 @@ export const getUsers = async (req: Request, res: Response) => {
 
     if (includeRoles) {
       const roles = await db.role.findMany();
-      res.status(200).json({ users: mappedUsers, roles });
+      res.status(200).json({ users: {
+        pagination,
+        data: mappedUsers,
+      }, roles });
       return;
     }
-    res.status(200).json(mappedUsers);
+    res.status(200).json({
+      pagination,
+      data: mappedUsers,
+    });
   } catch (err) {
     if (err instanceof Error) res.status(500).json({ error: err.message });
   }

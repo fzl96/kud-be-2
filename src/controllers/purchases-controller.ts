@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { Request, Response } from "express";
 import { z } from "zod";
 import { db } from "../lib/db.js";
+import { createPagination } from "../utils/pagination.js";
 
 const purchaseItemSchema = z.object({
   id: z.string(),
@@ -13,8 +14,53 @@ export const getPurchases = async (req: Request, res: Response) => {
   const includeProductsSuppliers =
     req.query.include_products_suppliers === "true";
 
+  const { page, pageSize = 10, search, date } = req.query;
+  let skip, take;
+
+  if (page) {
+    skip = (Number(page) - 1) * Number(pageSize);
+    take = Number(pageSize);
+  }
+
+  const where = {} as Prisma.PurchaseWhereInput;
+  if (search) {
+    where.OR = [
+      { supplier: { name: { contains: search as string } } },
+      { products: { 
+        some: {
+          product: {
+            name: { contains: search as string },
+          },
+        },
+       } },
+    ];
+  }
+
+  if (date) {
+    const [start, end] = (date as string).split(",");
+    const [dayStart, monthStart, yearStart] = start.split("-")
+    let dayEnd, monthEnd, yearEnd;
+    if (end) {
+      [dayEnd, monthEnd, yearEnd] = end.split("-")
+    } else {
+      dayEnd = dayStart;
+      monthEnd = monthStart;
+      yearEnd = yearStart;
+    }
+
+    const startDate = new Date(Number(yearStart), Number(monthStart) - 1, Number(dayStart))
+    const endDate = new Date(Number(yearEnd), Number(monthEnd) - 1, Number(dayEnd))
+    endDate.setDate(endDate.getDate() + 1);
+  
+    where.createdAt = {
+      gte: startDate,
+      lt: endDate,
+    };
+  }
+
   try {
-    const purchases = await db.purchase.findMany({
+    const purchases = db.purchase.findMany({
+      where,
       select: {
         id: true,
         createdAt: true,
@@ -35,9 +81,18 @@ export const getPurchases = async (req: Request, res: Response) => {
         supplier: true,
         total: true,
       },
+      skip,
+      take,
     });
 
-    const mappedPurchases = purchases.map((purchase) => ({
+    const count = db.purchase.count({ where });
+
+    const [purchasesData, purchasesCount] = await Promise.all([
+      purchases,
+      count,
+    ]);
+
+    const mappedPurchases = purchasesData.map((purchase) => ({
       id: purchase.id,
       createdAt: purchase.createdAt,
       updatedAt: purchase.updatedAt,
@@ -52,6 +107,13 @@ export const getPurchases = async (req: Request, res: Response) => {
       })),
     }));
 
+    const pagination = createPagination({
+      page: Number(page),
+      pageSize: Number(pageSize),
+      total: purchasesCount,
+      url: `${process.env.API_URL}/purchases`,
+    })
+    
     if (includeProductsSuppliers) {
       const suppliers = await db.supplier.findMany({
         where: { active: true },
@@ -76,14 +138,20 @@ export const getPurchases = async (req: Request, res: Response) => {
       });
 
       res.status(200).json({
-        purchases: mappedPurchases,
+        purchases: {
+          data: mappedPurchases,
+          pagination,
+        },
         suppliers,
         products,
       });
       return;
     }
 
-    res.status(200).json(mappedPurchases);
+    res.status(200).json({
+      pagination,
+      data: mappedPurchases,
+    });
   } catch (err) {
     if (err instanceof Error) res.status(500).json({ error: err.message });
   }

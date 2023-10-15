@@ -3,12 +3,30 @@ import { Request, Response } from "express";
 import { z } from "zod";
 import { db } from "../lib/db.js";
 import XLSX from "xlsx";
+import { createPagination } from "../utils/pagination.js";
 
 export const getProducts = async (req: Request, res: Response) => {
   const includeCategories = req.query.include_categories === "true";
+  const { page, pageSize = 10, search } = req.query;
+  let skip, take
+
+  if (page) {
+    skip = (Number(page) - 1) * Number(pageSize);
+    take = Number(pageSize);
+  }
+
+  const where = { active: true } as Prisma.ProductWhereInput;
+  if (search) {
+    where.OR = [
+      { name: { contains: search as string } },
+      { category: { name: { contains: search as string } } },
+      { barcode: { contains: search as string } },
+    ]
+  }
+
   try {
     const products = await db.product.findMany({
-      where: { active: true },
+      where,
       select: {
         id: true,
         name: true,
@@ -24,13 +42,36 @@ export const getProducts = async (req: Request, res: Response) => {
           },
         },
       },
+      skip,
+      take,
     });
+    const count = await db.product.count({
+      where,
+    });
+    const [productsData, productsCount] = await Promise.all([
+      products,
+      count,
+    ]);
+
+    const pagination = createPagination({
+      page: Number(page),
+      pageSize: Number(pageSize),
+      total: productsCount,
+      url: `${process.env.API_URL}/products`,
+    })
+    
     if (includeCategories) {
       const categories = await db.category.findMany();
-      res.status(200).json({ products, categories });
+      res.status(200).json({ products: {
+        pagination,
+        data: productsData,
+      }, categories });
       return;
     }
-    res.status(200).json(products);
+    res.status(200).json({
+      pagination,
+      data: productsData,
+    });
   } catch (err) {
     if (err instanceof Error) res.status(500).json({ error: err.message });
   }

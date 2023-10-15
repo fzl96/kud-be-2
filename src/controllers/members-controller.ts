@@ -2,11 +2,27 @@ import { Prisma } from "@prisma/client";
 import { Request, Response } from "express";
 import { z } from "zod";
 import { db } from "../lib/db.js";
+import { createPagination } from "../utils/pagination.js";
 
 export const getMembers = async (req: Request, res: Response) => {
+  const { page, pageSize = 10, search } = req.query;
+  let skip, take;
+
+  if (page) {
+    skip = (Number(page) - 1) * Number(pageSize);
+    take = Number(pageSize);
+  }
+
+  const where = { active: true } as Prisma.MemberWhereInput;
+  if (search) {
+    where.OR = [
+      { name: { contains: search as string } },
+    ]
+  }
+  
   try {
-    const members = await db.member.findMany({
-      where: { active: true },
+    const members = db.member.findMany({
+      where,
       include: {
         group: {
           select: {
@@ -15,12 +31,31 @@ export const getMembers = async (req: Request, res: Response) => {
           },
         },
       },
+      skip,
+      take,
     });
-    if (!members) {
+    const count = db.member.count({
+      where,
+    });
+
+    const [membersData, membersCount] = await Promise.all([
+      members,
+      count,
+    ]);
+    
+    if (!count) {
       res.status(200).json(members);
       return;
     }
-    const mappedMembers = members.map((member) => {
+
+    const pagination = createPagination({
+      page: Number(page),
+      pageSize: Number(pageSize),
+      total: membersCount,
+      url: `${process.env.API_URL}/members`,
+    })
+    
+    const mappedMembers = membersData.map((member) => {
       return {
         id: member.id,
         name: member.name,
@@ -34,7 +69,11 @@ export const getMembers = async (req: Request, res: Response) => {
         },
       };
     });
-    res.status(200).json(mappedMembers);
+
+    res.status(200).json({
+      pagination,
+      data: mappedMembers,
+    });
   } catch (err) {
     if (err instanceof Error)
       res.status(500).json({ error: "Internal Server Error" });

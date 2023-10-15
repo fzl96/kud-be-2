@@ -17,7 +17,7 @@ export const getCategories = async (req: Request, res: Response) => {
     take = Number(pageSize);
   }
 
-  const where = { } as Prisma.MemberWhereInput;
+  const where = { } as Prisma.CategoryWhereInput;
   if (search) {
     where.OR = [
       { name: { contains: search as string } },
@@ -29,7 +29,6 @@ export const getCategories = async (req: Request, res: Response) => {
       where,
       skip,
       take,
-      
     });
     const count = db.category.count({
       where,

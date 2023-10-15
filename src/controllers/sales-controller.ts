@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { Request, Response } from "express";
 import { z } from "zod";
 import { db } from "../lib/db.js";
+import { createPagination } from "../utils/pagination.js";
 
 const productSchema = z.object({
   id: z.string(),
@@ -9,8 +10,48 @@ const productSchema = z.object({
 });
 
 export const getSales = async (req: Request, res: Response) => {
+  const { page, pageSize = 10, search, date } = req.query;
+  let skip, take;
+
+  if (page) {
+    skip = (Number(page) - 1) * Number(pageSize);
+    take = Number(pageSize);
+  }
+
+  const where = {} as Prisma.SaleWhereInput;
+  if (search) {
+    where.OR = [
+      { customerName: { contains: search as string } },
+      { user: { name: { contains: search as string } } },
+      { member: { name: { contains: search as string } } },
+    ];
+  }
+
+  if (date) {
+    const [start, end] = (date as string).split(",");
+    const [dayStart, monthStart, yearStart] = start.split("-")
+    let dayEnd, monthEnd, yearEnd;
+    if (end) {
+      [dayEnd, monthEnd, yearEnd] = end.split("-")
+    } else {
+      dayEnd = dayStart;
+      monthEnd = monthStart;
+      yearEnd = yearStart;
+    }
+
+    const startDate = new Date(Number(yearStart), Number(monthStart) - 1, Number(dayStart))
+    const endDate = new Date(Number(yearEnd), Number(monthEnd) - 1, Number(dayEnd))
+    endDate.setDate(endDate.getDate() + 1);
+  
+    where.createdAt = {
+      gte: startDate,
+      lt: endDate,
+    };
+  }
+  
   try {
-    const sales = await db.sale.findMany({
+    const sales = db.sale.findMany({
+      where,
       select: {
         id: true,
         createdAt: true,
@@ -33,8 +74,24 @@ export const getSales = async (req: Request, res: Response) => {
           },
         },
       },
+      skip,
+      take,
     });
-    res.status(200).json(sales);
+    const count = db.sale.count({ where });
+
+    const [salesData, salesCount] = await Promise.all([sales, count]);
+
+    const pagination = createPagination({
+      page: Number(page),
+      pageSize: Number(pageSize),
+      total: salesCount,
+      url: `${process.env.API_URL}/sales`,
+    });
+    
+    res.status(200).json({
+      pagination,
+      data: salesData,
+    });
   } catch (err) {
     if (err instanceof Error) res.status(500).json({ error: err.message });
   }

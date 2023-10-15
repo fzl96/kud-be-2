@@ -1,10 +1,27 @@
 import { Prisma } from "@prisma/client";
 import { Request, Response } from "express";
 import { db } from "../lib/db.js";
+import { createPagination } from "../utils/pagination.js";
 
 export const getGroups = async (req: Request, res: Response) => {
+  const { page, pageSize = 10, search } = req.query;
+  let skip, take
+
+  if (page) {
+    skip = (Number(page) - 1) * Number(pageSize);
+    take = Number(pageSize);
+  }
+
+  const where = { } as Prisma.GroupWhereInput;
+  if (search) {
+    where.OR = [
+      { name: { contains: search as string } },
+    ]
+  }
+  
   try {
-    const groups = await db.group.findMany({
+    const groups = db.group.findMany({
+      where,
       include: {
         members: {
           select: {
@@ -15,9 +32,27 @@ export const getGroups = async (req: Request, res: Response) => {
           },
         },
       },
+      skip,
+      take,
     });
 
-    const groupWithLeader = groups.map((group) => {
+    const count = db.group.count({
+      where,
+    });
+
+    const [groupsData, groupsCount] = await Promise.all([
+      groups,
+      count,
+    ]);
+
+    const pagination = createPagination({
+      page: Number(page),
+      pageSize: Number(pageSize),
+      total: groupsCount,
+      url: `${process.env.API_URL}/groups`,
+    })
+
+    const groupWithLeader = groupsData.map((group) => {
       const leader = group.members.find(
         (member) => member.memberRole === "KETUA"
       );
@@ -34,7 +69,10 @@ export const getGroups = async (req: Request, res: Response) => {
       };
     });
 
-    res.status(200).json(groupWithLeader);
+    res.status(200).json({
+      pagination,
+      data: groupWithLeader,
+    });
   } catch (err) {
     if (err instanceof Error) res.status(500).json({ error: err.message });
   }

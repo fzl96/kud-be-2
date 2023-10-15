@@ -1,13 +1,49 @@
 import { Prisma } from "@prisma/client";
 import { Request, Response } from "express";
 import { db } from "../lib/db.js";
+import { createPagination } from "../utils/pagination.js";
 
 export const getSuppliers = async (req: Request, res: Response) => {
+  const { page, pageSize = 10, search } = req.query;
+  let skip, take
+
+  if (page) {
+    skip = (Number(page) - 1) * Number(pageSize);
+    take = Number(pageSize);
+  }
+
+  const where = { active: true } as Prisma.SupplierWhereInput;
+  if (search) {
+    where.OR = [
+      { name: { contains: search as string } },
+    ]
+  }
   try {
-    const suppliers = await db.supplier.findMany({
-      where: { active: true },
+    const suppliers = db.supplier.findMany({
+      where,
+      skip,
+      take,
     });
-    res.status(200).json(suppliers);
+    const count = db.supplier.count({
+      where,
+    });
+
+    const [suppliersData, suppliersCount] = await Promise.all([
+      suppliers,
+      count,
+    ]);
+
+    const pagination = createPagination({
+      page: Number(page),
+      pageSize: Number(pageSize),
+      total: suppliersCount,
+      url: `${process.env.API_URL}/suppliers`,
+    })
+    
+    res.status(200).json({
+      pagination,
+      data: suppliersData,
+    });
   } catch (err) {
     if (err instanceof Error) res.status(500).json({ error: err.message });
   }
