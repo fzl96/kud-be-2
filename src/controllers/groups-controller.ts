@@ -24,6 +24,9 @@ export const getGroups = async (req: Request, res: Response) => {
       where,
       include: {
         members: {
+          where: {
+            active: true,
+          },
           select: {
             id: true,
             name: true,
@@ -95,6 +98,9 @@ export const getGroup = async (req: Request, res: Response) => {
         where: { id: id },
         include: {
           members: {
+            where: {
+              active: true,
+            },
             select: {
               id: true,
               name: true,
@@ -134,6 +140,9 @@ export const getGroup = async (req: Request, res: Response) => {
         where: { id: id },
         include: {
           members: {
+            where: {
+              active: true,
+            },
             select: {
               id: true,
               name: true,
