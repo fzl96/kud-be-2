@@ -56,7 +56,7 @@ export const getSalesData = async (req: Request, res: Response) => {
     SELECT
       ps.productId,
       p.name,
-      COUNT(ps.productId) AS sales_count,
+      -- COUNT(ps.productId) AS sales_count,
       SUM(ps.quantity) AS total_quantity
     FROM
       ProductSale ps
@@ -67,10 +67,10 @@ export const getSalesData = async (req: Request, res: Response) => {
       ps.productId,
       p.name
     ORDER BY
-      sales_count DESC
+      total_quantity DESC
     LIMIT 4;
     `;
-
+        
     const [result, result2] = (await db.$transaction([monthly, yearly])) as [
       MonthlyData[],
       ProductsSale[]
@@ -107,7 +107,7 @@ export const getSalesData = async (req: Request, res: Response) => {
         return {
           id: item.productId || "",
           name: item.name || "",
-          salesCount: Number(item.sales_count) || 0,
+          // salesCount: Number(item.sales_count) || 0,
           quantityCount: Number(item.total_quantity) || 0,
         };
       }),
