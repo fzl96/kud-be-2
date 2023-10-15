@@ -12,7 +12,7 @@ export function createPagination ({
   url,
 }: Pagination) {
   const pagination = {
-    page: page,
+    page: page || 1,
     pageSize: page ? pageSize : total,
     total: total,
     totalPages: page ? Math.ceil(total / pageSize) : 1,
