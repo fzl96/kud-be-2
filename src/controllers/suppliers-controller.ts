@@ -145,7 +145,10 @@ export const updateSupplier = async (req: Request, res: Response) => {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
       if (err.code === "P2025") {
         res.status(404).json({ error: "Supplier tidak ditemukan" });
-      } else {
+      } else if (err.code === "P2002") {
+        res.status(400).json({ error: "Nama supplier sudah terdaftar" });
+      }
+      else {
         res.status(500).json({ error: err.message });
       }
     }

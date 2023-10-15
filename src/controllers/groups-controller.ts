@@ -233,7 +233,13 @@ export const createGroup = async (req: Request, res: Response) => {
 
     res.status(201).json(group);
   } catch (err) {
-    if (err instanceof Error) res.status(500).json({ error: err.message });
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      if (err.code === "P2002") {
+        res.status(400).json({ error: "Kelompok sudah ada" });
+      } else {
+        res.status(500).json({ error: "Internal Server Error" });
+      }
+    }
   }
 };
 
@@ -300,7 +306,15 @@ export const updateGroup = async (req: Request, res: Response) => {
 
     res.status(200).json(group);
   } catch (err) {
-    if (err instanceof Error) res.status(500).json({ error: err.message });
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      if (err.code === "P2025") {
+        res.status(404).json({ error: "Kelompok tidak ditemukan" });
+      } else if (err.code === "P2002") {
+        res.status(400).json({ error: "Kelompok sudah ada" });
+      } else {
+        res.status(500).json({ error: "Internal Server Error" });
+      }
+    }
   }
 };
 

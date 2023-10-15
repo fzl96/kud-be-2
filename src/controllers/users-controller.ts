@@ -255,6 +255,8 @@ export const updateUser = async (req: Request, res: Response) => {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
       if (err.code === "P2025") {
         res.status(400).json({ error: "User tidak ditemukan" });
+      } else if (err.code === "P2002") {
+        res.status(400).json({ error: "Username sudah ada" });
       } else {
         res.status(500).json({ error: err.message });
       }
