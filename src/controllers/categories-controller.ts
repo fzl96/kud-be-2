@@ -2,15 +2,29 @@ import { Request, Response } from "express";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { db } from "../lib/db.js";
+import { createPagination } from "../utils/pagination.js";
 
 const categorySchema = z.object({
   name: z.string().min(3).max(50),
 });
 
 export const getCategories = async (req: Request, res: Response) => {
+  const { page, pageSize = 10, search } = req.query;
+  let skip, take
+
+  if (page) {
+    skip = (Number(page) - 1) * Number(pageSize);
+    take = Number(pageSize);
+  }
+
+  const where = { } as Prisma.MemberWhereInput;
+  if (search) {
+    where.OR = [
+      { name: { contains: search as string } },
+    ]
+  }
+
   try {
-    const categories = await db.category.findMany();
-    res.status(200).json(categories);
     const categories = db.category.findMany({
       where,
       skip,
@@ -105,15 +119,6 @@ export const updateCategory = async (req: Request, res: Response) => {
   }
 
   try {
-    const existingCategory = await db.category.findUnique({
-      where: { id: id },
-    });
-
-    if (existingCategory?.name === name) {
-      res.status(200).json({ message: "Tidak ada perubahan" });
-      return;
-    }
-
     const category = await db.category.update({
       where: { id: id },
       data: { name },
@@ -138,7 +143,7 @@ export const deleteCategory = async (req: Request, res: Response) => {
     await db.category.delete({
       where: { id: id },
     });
-    res.status(200).json({
+    res.status(204).json({
       message: `Kategori dengan id ${id} berhasil dihapus`,
     });
   } catch (err) {
