@@ -161,8 +161,25 @@ export const deleteCategories = async (req: Request, res: Response) => {
   try {
     const categories = await db.category.deleteMany({
       where: { id: { in: ids } },
+    // check if ids only one, then delete one
+    if (ids.length === 1) {
+      await db.category.delete({
+        where: { id: ids[0] },
+      });
+      res.status(204).json({
+        message: `Kategori berhasil dihapus`,
+      });
+      return;
+    }
+    await db.category.deleteMany({
+      where: { 
+        id: { in: ids },
+        products: { none: {} }
+     },
     });
-    res.status(200).json(categories);
+    res.status(204).json({
+      message: `Kategori berhasil dihapus`,
+    });
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
       if (err.code === "P2025") {
