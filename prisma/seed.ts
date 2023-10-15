@@ -1,5 +1,4 @@
 import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
@@ -232,5 +231,4 @@ const prisma = new PrismaClient();
 
   console.log(itemsCreated);
 
-  // console.log(categoriesCreated);
 })();
