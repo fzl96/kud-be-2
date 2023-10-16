@@ -20,6 +20,7 @@ import morgan from "morgan";
 import swaggerUI from "swagger-ui-express";
 import { specs } from "./utils/swagger.js";
 import { authorize } from "./middleware/permissions-middleware.js";
+import dashboardRoute from "./routes/dashboard-route.js";
 
 const app = express();
 dotenv.config();
@@ -30,7 +31,7 @@ app.use(morgan("dev"));
 app.use(
   cors({
     credentials: true,
-    origin: ["http://localhost:5173"],
+    origin: ["https://kud-henna.vercel.app", "http://localhost:5173"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
@@ -40,7 +41,7 @@ app.get("/", (req, res) => {
   res.json({ message: "hello world" });
 });
 app.use("/auth", authRoute);
-app.get("/dashboard/:year", authenticateToken, authorize, getSalesData);
+app.use("/dashboard", authenticateToken, authorize, dashboardRoute);
 app.use("/categories", authenticateToken, authorize, categoriesRoute);
 app.use("/products", authenticateToken, productsRoute);
 app.use("/export/products", authenticateToken, authorize, exportProducts);
