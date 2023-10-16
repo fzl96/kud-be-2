@@ -168,18 +168,19 @@ export const postCashier = async (req: Request, res: Response) => {
       }),
     ]);
 
-    res.status(201).json({ message: "Penjualan berhasil ditambahkan", result });
+    res.status(201).json({ message: "Penjualan berhasil ditambahkan", data: result });
   } catch (err) {
-    console.log(err);
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
       if (err.code === "P2025") {
         res.status(404).json({ error: "Member tidak ditemukan" });
         return;
       } else {
         if (err instanceof Error) {
-          res.status(500).json({ error: err.message });
+          res.status(500).json({ error: "Internal Server Error" });
         }
+        console.log(err);
       }
     }
+    console.log(err)
   }
 };
