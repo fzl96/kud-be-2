@@ -177,6 +177,7 @@ model Purchase {
   supplierId String
   supplier   Supplier       @relation(fields: [supplierId], references: [id])
   products   PurchaseItem[]
+  verified   Boolean        @default(false)
 
   @@index([supplierId], name: "supplierId")
 }
