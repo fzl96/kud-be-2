@@ -30,7 +30,7 @@ export const deleteProduct = () => {
             .get("/products")
             .set("Authorization", `Bearer ${jwt}`);
 
-          productId = res.body.find(
+          productId = res.body.data.find(
             (product: any) => product.name === "Chitatos"
           ).id;
         });

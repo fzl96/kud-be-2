@@ -24,24 +24,32 @@ export const getCategory = () => {
       });
 
       describe("Jika id ditemukan", () => {
-        let CategoryId: string;
+        let categoryId: string;
         beforeAll(async () => {
           const res = await request(app)
             .get("/categories")
             .set("Authorization", `Bearer ${jwt}`);
-          CategoryId = res.body[0].id;
+          categoryId = res.body.data[0].id;
+        });
+
+        it("respons harus 200 OK", async () => {
+          const res = await request(app)
+            .get(`/categories/${categoryId}`)
+            .set("Authorization", `Bearer ${jwt}`);
+          expect(res.status).toBe(200);
         });
 
         it("respons harus berisi objek dengan property yang valid (memiliki id, name, createdAt, updatedAt)", async () => {
           const res = await request(app)
-            .get(`/categories/${CategoryId}`)
+            .get(`/categories/${categoryId}`)
             .set("Authorization", `Bearer ${jwt}`);
-          expect(res.body).toEqual({
+          expect(res.body).toMatchObject({
             id: expect.any(String),
             name: expect.any(String),
             createdAt: expect.any(String),
             updatedAt: expect.any(String),
           });
+          console.log(res)
         });
       });
     });

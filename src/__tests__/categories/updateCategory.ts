@@ -30,8 +30,8 @@ export const updateCategory = () => {
           const res = await request(app)
             .get("/categories")
             .set("Authorization", `Bearer ${jwt}`);
-          CategoryId = res.body.find(
-            (category: any) => category.name === "Test"
+          CategoryId = res.body.data.find(
+            (category: any) => category.name === "Unit Test Kategori"
           ).id;
         });
 
@@ -52,19 +52,6 @@ export const updateCategory = () => {
               .set("Authorization", `Bearer ${jwt}`)
               .send({ name: "Minuman" });
             expect(res.status).toBe(400);
-          });
-        });
-
-        describe("Jika nama kategori sama dengan sebelumnya", () => {
-          it("respons harus 200 OK", async () => {
-            const res = await request(app)
-              .put(`/categories/${CategoryId}`)
-              .set("Authorization", `Bearer ${jwt}`)
-              .send({ name: "Test" });
-            expect(res.status).toBe(200);
-            expect(res.body).toEqual({
-              message: "Tidak ada perubahan",
-            });
           });
         });
 

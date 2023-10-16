@@ -36,11 +36,11 @@ export const deleteCategory = () => {
             name: string;
             createdAt: string;
             updatedAt: string;
-          }[] = res.body;
-          CategoryIdWithProducts = res.body.find(
+          }[] = res.body.data;
+          CategoryIdWithProducts = res.body.data.find(
             (category: any) => category.name === "Makanan"
           ).id;
-          CategoryIdWithoutProducts = res.body.find(
+          CategoryIdWithoutProducts = res.body.data.find(
             (category: any) => category.name === "Test Update"
           ).id;
         });
@@ -59,7 +59,7 @@ export const deleteCategory = () => {
             const res = await request(app)
               .delete(`/categories/${CategoryIdWithoutProducts}`)
               .set("Authorization", `Bearer ${jwt}`);
-            expect(res.status).toBe(200);
+            expect(res.status).toBe(204);
           });
         });
       });

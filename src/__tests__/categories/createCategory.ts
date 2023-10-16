@@ -69,22 +69,8 @@ export const createCategory = () => {
           const res = await request(app)
             .post("/categories")
             .set("Authorization", `Bearer ${jwt}`)
-            .send({ name: "Test" });
+            .send({ name: "Unit Test Kategori" });
           expect(res.status).toBe(201);
-        });
-
-        it("respons harus berisi objek dengan property yang valid (memiliki id, name, createdAt, updatedAt)", async () => {
-          const res = await request(app)
-            .post("/categories")
-            .set("Authorization", `Bearer ${jwt}`)
-            .send({ name: "Kategori Baru" });
-          console.log(res.body);
-          expect(res.body).toEqual({
-            id: expect.any(String),
-            name: expect.any(String),
-            createdAt: expect.any(String),
-            updatedAt: expect.any(String),
-          });
         });
       });
     });

@@ -21,11 +21,14 @@ export const getCategories = () => {
         expect(res.status).toBe(200);
       });
 
-      it("respons harus berisi array", async () => {
+      it("respons harus berisi objek pagination dan array data", async () => {
         const res = await request(app)
           .get("/categories")
           .set("Authorization", `Bearer ${jwt}`);
-        expect(res.body).toEqual(expect.any(Array));
+        expect(res.body).toEqual(expect.objectContaining({
+          pagination: expect.any(Object),
+          data: expect.any(Array),
+        }));
       });
     });
   });

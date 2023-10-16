@@ -19,7 +19,7 @@ export const updateProduct = () => {
         const res = await request(app)
           .get("/products")
           .set("Authorization", `Bearer ${jwt}`);
-        productId = res.body.find((product: any) => product.name === "Taro").id;
+        productId = res.body.data.find((product: any) => product.name === "Taro").id;
       });
 
       describe("Jika id tidak ditemukan", () => {
@@ -30,7 +30,6 @@ export const updateProduct = () => {
             .send({
               name: "Taro",
               price: 20000,
-              stock: 10,
               barcode: "1234567891234",
               categoryId: "clj0mgybi00004f5g9678m6b1",
             });
@@ -47,8 +46,7 @@ export const updateProduct = () => {
               .send({
                 name: "",
                 price: 20000,
-                stock: 10,
-                barcode: "1234567891234",
+                barcode: "12345678912345",
                 categoryId: "clj0mgybi00004f5g9678m6b1",
               });
             expect(res.status).toBe(200);
@@ -62,8 +60,7 @@ export const updateProduct = () => {
               .set("Authorization", `Bearer ${jwt}`)
               .send({
                 name: "Taro",
-                stock: 10,
-                barcode: "1234567891234",
+                barcode: "12345678912345",
                 categoryId: "clj0mgybi00004f5g9678m6b1",
               });
             expect(res.status).toBe(200);
@@ -94,7 +91,7 @@ export const updateProduct = () => {
                 name: "Taro",
                 price: 20000,
                 stock: 10,
-                barcode: "1234567891234",
+                barcode: "12345678912345",
               });
             expect(res.status).toBe(200);
           });
@@ -124,8 +121,7 @@ export const updateProduct = () => {
               .send({
                 name: "Chitatos",
                 price: 20000,
-                stock: 10,
-                barcode: "987654321",
+                barcode: "51265236546",
                 categoryId: "clj0mgybi00004f5g9678m6b1",
               });
             expect(res.status).toBe(200);

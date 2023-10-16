@@ -3,11 +3,11 @@ import app from "../../app.js";
 import { userPayload } from "../../lib/payload.js";
 import { signJwt } from "../../utils/jwt.js";
 
-export const getProducts = () => {
-  return describe("GET /products", () => {
+export const getUsers = () => {
+  return describe("GET /users", () => {
     describe("Jika pengguna belum login", () => {
       it("respons harus 401 Unauthorized", async () => {
-        const res = await request(app).get("/products");
+        const res = await request(app).get("/users");
         expect(res.status).toBe(401);
       });
     });
@@ -16,14 +16,14 @@ export const getProducts = () => {
       const jwt = signJwt(userPayload.admin);
       it("respons harus 200 OK", async () => {
         const res = await request(app)
-          .get("/products")
+          .get("/users")
           .set("Authorization", `Bearer ${jwt}`);
         expect(res.status).toBe(200);
       });
 
       it("respons harus berisi objek pagination dan array data", async () => {
         const res = await request(app)
-          .get("/products")
+          .get("/users")
           .set("Authorization", `Bearer ${jwt}`);
         expect(res.body).toEqual(expect.objectContaining({
           pagination: expect.any(Object),

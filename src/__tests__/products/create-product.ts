@@ -70,7 +70,7 @@ export const createProduct = () => {
               name: "Taro",
               price: 10000,
               stock: 10,
-              barcode: "1234567891234",
+              barcode: "",
             });
           expect(res.status).toBe(400);
         });
@@ -85,7 +85,7 @@ export const createProduct = () => {
               name: "Taro",
               price: 10000,
               stock: 10,
-              barcode: "1234567891234",
+              barcode: "12345678912345",
               categoryId: "123456",
             });
           expect(res.status).toBe(404);
@@ -101,7 +101,7 @@ export const createProduct = () => {
               name: "Beng-beng",
               price: 10000,
               stock: 10,
-              barcode: "1234567891234",
+              barcode: "12345678912345",
               categoryId: "clj0mgybi00004f5g9678m6b1",
             });
           expect(res.status).toBe(400);
@@ -117,7 +117,7 @@ export const createProduct = () => {
               name: 123,
               price: 10000,
               stock: 10,
-              barcode: "1234567891234",
+              barcode: "12345678912345",
               categoryId: "clj0mgybi00004f5g9678m6b1",
             });
           expect(res.status).toBe(400);
@@ -133,7 +133,7 @@ export const createProduct = () => {
               name: "aa",
               price: 10000,
               stock: 10,
-              barcode: "1234567891234",
+              barcode: "12345678912345",
               categoryId: "clj0mgybi00004f5g9678m6b1",
             });
           expect(res.status).toBe(400);
@@ -149,7 +149,7 @@ export const createProduct = () => {
               name: "a".repeat(51),
               price: 10000,
               stock: 10,
-              barcode: "1234567891234",
+              barcode: "12345678912345",
               categoryId: "clj0mgybi00004f5g9678m6b1",
             });
           expect(res.status).toBe(400);
@@ -165,7 +165,7 @@ export const createProduct = () => {
               name: "Taro",
               price: "10000",
               stock: 10,
-              barcode: "1234567891234",
+              barcode: "12345678912345",
               categoryId: "clj0mgybi00004f5g9678m6b1",
             });
           expect(res.status).toBe(400);
@@ -180,7 +180,7 @@ export const createProduct = () => {
               name: "Taro",
               price: -1000,
               stock: 10,
-              barcode: "1234567891234",
+              barcode: "12345678912345",
               categoryId: "clj0mgybi00004f5g9678m6b1",
             })
             .set("Authorization", `Bearer ${jwt}`);
@@ -196,7 +196,7 @@ export const createProduct = () => {
               name: "Taro",
               price: 10000,
               stock: "10",
-              barcode: "1234567891234",
+              barcode: "12345678912345",
               categoryId: "clj0mgybi00004f5g9678m6b1",
             })
             .set("Authorization", `Bearer ${jwt}`);
@@ -212,7 +212,7 @@ export const createProduct = () => {
               name: "Taro",
               price: 10000,
               stock: -10,
-              barcode: "1234567891234",
+              barcode: "12345678912345",
               categoryId: "clj0mgybi00004f5g9678m6b1",
             })
             .set("Authorization", `Bearer ${jwt}`);
