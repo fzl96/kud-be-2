@@ -5,12 +5,7 @@ import { z } from "zod";
 import { db } from "../lib/db.js";
 import { createPagination } from "../utils/pagination.js";
 
-const userSchema = z.object({
-  name: z.string().optional(),
-  username: z.string().min(4).optional(),
-  password: z.string().min(4).optional(),
-  roleId: z.string().optional(),
-});
+
 
 export const getUsers = async (req: Request, res: Response) => {
   const includeRoles = req.query.include_roles === "true";
@@ -139,22 +134,24 @@ export const getUser = async (req: Request, res: Response) => {
   }
 };
 
+
+const createUserSchema = z.object({
+  name: z.string(),
+  username: z.string().min(4).max(20).nonempty(),
+  password: z.string().min(4).max(50).nonempty(),
+  confirmPassword: z.string().min(4).max(50).nonempty(),
+  roleId: z.string().nonempty(),
+});
+
 export const createUser = async (req: Request, res: Response) => {
   const { name, username, password, confirmPassword, roleId } = req.body;
-
-  if (!name || !username || !password || !confirmPassword || !roleId) {
-    res.status(400).json({
-      error: "Nama, Username, Password, dan Role tidak boleh kosong",
-    });
-    return;
-  }
 
   if (password !== confirmPassword) {
     res.status(400).json({ error: "Password tidak sama" });
     return;
   }
 
-  const isValid = userSchema.safeParse(req.body);
+  const isValid = createUserSchema.safeParse(req.body);
   if (!isValid.success) {
     res.status(400).json({ error: "Data tidak valid" });
     return;
@@ -193,6 +190,14 @@ export const createUser = async (req: Request, res: Response) => {
   }
 };
 
+// const updateUserSchema = z.object({
+//   name: z.string().optional(),
+//   username: z.string().min(4).max(20).optional(),
+//   password: z.string().min(4).max(50).optional(),
+//   confirmPassword: z.string().min(4).max(50).optional(),
+//   roleId: z.string().optional(),
+// });
+
 export const updateUser = async (req: Request, res: Response) => {
   const { id } = req.params;
   const {
@@ -211,11 +216,27 @@ export const updateUser = async (req: Request, res: Response) => {
     return;
   }
 
+  // const isValid = updateUserSchema.safeParse(req.body);
+  // if (!isValid.success) {
+  //   res.status(400).json({ error: "Data tidak valid" });
+  //   return;
+  // }
+
   try {
     const updateData: Prisma.UserUpdateInput = {};
     if (name) updateData.name = name;
-    if (username) updateData.username = username;
+    if (username) {
+      if (username.length < 4 || username.length > 20) {
+        res.status(400).json({ error: "Username harus 4-20 karakter" });
+        return;
+      }
+      updateData.username = username;
+    }
     if (newPassword) {
+      if (newPassword.length < 4 || newPassword.length > 50) {
+        res.status(400).json({ error: "Password harus 4-50 karakter" });
+        return;
+      }
       if (!confirmPassword) {
         res.status(400).json({ error: "Konfirmasi password tidak ada" });
         return;
@@ -231,7 +252,7 @@ export const updateUser = async (req: Request, res: Response) => {
         select: { password: true },
       });
       if (!user) {
-        res.status(400).json({ error: "User tidak ditemukan" });
+        res.status(404).json({ error: "User tidak ditemukan" });
         return;
       }
       const isMatch = await bcrypt.compare(currentPassword, user.password);
@@ -254,7 +275,7 @@ export const updateUser = async (req: Request, res: Response) => {
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
       if (err.code === "P2025") {
-        res.status(400).json({ error: "User tidak ditemukan" });
+        res.status(404).json({ error: "User tidak ditemukan" });
       } else if (err.code === "P2002") {
         res.status(400).json({ error: "Username sudah ada" });
       } else {
@@ -275,7 +296,7 @@ export const deleteUser = async (req: Request, res: Response) => {
     });
 
     if (!user) {
-      res.status(400).json({ error: "User tidak ditemukan" });
+      res.status(404).json({ error: "User tidak ditemukan" });
       return;
     }
 
@@ -296,7 +317,7 @@ export const deleteUser = async (req: Request, res: Response) => {
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
       if (err.code === "P2025") {
-        res.status(400).json({ error: "User tidak ditemukan" });
+        res.status(404).json({ error: "User tidak ditemukan" });
       } else {
         res.status(500).json({ error: err.message });
       }
@@ -315,7 +336,7 @@ export const deleteUsers = async (req: Request, res: Response) => {
     });
 
     if (users.length === 0) {
-      res.status(400).json({ error: "User tidak ditemukan" });
+      res.status(440).json({ error: "User tidak ditemukan" });
       return;
     }
 
@@ -342,7 +363,7 @@ export const deleteUsers = async (req: Request, res: Response) => {
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
       if (err.code === "P2025") {
-        res.status(400).json({ error: "User tidak ditemukan" });
+        res.status(404).json({ error: "User tidak ditemukan" });
       } else {
         res.status(500).json({ error: err.message });
       }
