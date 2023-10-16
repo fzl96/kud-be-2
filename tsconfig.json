@@ -6,8 +6,11 @@
     "sourceMap": true,
     "outDir": "dist",
     "strict": true,
-    "lib": ["esnext"],
-    "esModuleInterop": true
+    "lib": [
+      "esnext"
+    ],
+    "esModuleInterop": true,
+    "resolveJsonModule": true
   },
   "include": [
     "src/**/*",
