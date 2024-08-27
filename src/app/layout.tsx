@@ -5,6 +5,7 @@ import { type Metadata } from "next";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Sidebar } from "@/components/sidebar";
+import { ReactQueryProvider } from "@/components/react-query-provider";
 
 export const metadata: Metadata = {
   title: "Create T3 App",
@@ -18,21 +19,23 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${GeistSans.variable}`}>
       <body className="min-h-scren bg-background">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          disableTransitionOnChange
-        >
-          <TooltipProvider>
-            <div
-              vaul-drawer-wrapper=""
-              className="grid h-screen w-full bg-background pl-[56px]"
-            >
-              <Sidebar />
-              {children}
-            </div>
-          </TooltipProvider>
-        </ThemeProvider>
+        <ReactQueryProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            disableTransitionOnChange
+          >
+            <TooltipProvider>
+              <div
+                vaul-drawer-wrapper=""
+                className="grid h-screen w-full bg-background pl-[56px]"
+              >
+                <Sidebar />
+                {children}
+              </div>
+            </TooltipProvider>
+          </ThemeProvider>
+        </ReactQueryProvider>
       </body>
     </html>
   );
