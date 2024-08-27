@@ -10,12 +10,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SearchInput } from "@/components/main/search-input";
 
 export function ListForm({ className }: { className?: string }) {
   return (
     <form className={cn("grid w-full items-start gap-6", className)}>
       <fieldset className="grid gap-6 rounded-lg border p-4">
         <legend className="-ml-1 px-1 text-sm font-medium">Settings</legend>
+        <div className="grid gap-3">
+          <Label htmlFor="ani-search">Search Anime</Label>
+          {/* <CommandMenu /> */}
+          <SearchInput />
+        </div>
         <div className="grid gap-3">
           <Label htmlFor="model">Model</Label>
           <Select>
