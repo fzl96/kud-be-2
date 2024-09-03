@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useDebounce } from "use-debounce";
@@ -19,12 +20,13 @@ import {
   CommandLoading,
   CommandEmpty,
 } from "@/components/ui/command";
-import Image from "next/image";
+import { useAnimeStore } from "@/store/anime";
 
 export function SearchInput({ ...props }: DialogProps) {
   const [search, setSearch] = useState("");
   const [value] = useDebounce(search, 300);
   const [open, setOpen] = useState(false);
+  const addAnime = useAnimeStore((state) => state.addAnime);
 
   const { data, isLoading } = useQuery<Anime[]>({
     queryKey: ["search", value],
@@ -56,6 +58,7 @@ export function SearchInput({ ...props }: DialogProps) {
   const runCommand = useCallback((anime: Anime) => {
     setOpen(false);
     // TODO: Add item to store
+    addAnime(anime);
   }, []);
 
   return (
@@ -110,7 +113,6 @@ export function SearchInput({ ...props }: DialogProps) {
 }
 
 function Item({ anime }: { anime: Anime }) {
-  console.log(anime.aired);
   return (
     <>
       <div className="h-[80px] w-[100px] overflow-hidden rounded-sm transition-all duration-150 group-hover:h-[150px]">
