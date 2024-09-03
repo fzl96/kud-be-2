@@ -6,7 +6,12 @@ import { Command as CommandPrimitive } from "cmdk";
 import { Search } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { DialogTitle, Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 const Command = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive>,
@@ -38,6 +43,9 @@ const CommandDialog = ({ children, ...props }: CommandDialogProps) => {
           {children}
         </Command>
       </DialogContent>
+      <DialogDescription className="sr-only">
+        A command menu for searching anime
+      </DialogDescription>
     </Dialog>
   );
 };
