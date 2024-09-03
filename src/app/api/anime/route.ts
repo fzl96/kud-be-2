@@ -16,6 +16,10 @@ export async function GET(request: NextRequest) {
     score: data.score,
     genres: data.genres,
     rank: data.rank,
+    year: data.year,
+    type: data.type,
+    aired: data.aired,
+    status: data.status,
   }));
 
   return Response.json(animeMapped);

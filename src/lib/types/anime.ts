@@ -1,6 +1,7 @@
 import type {
   Images,
   ProducersEntityOrStudiosEntityOrGenresEntityOrDemographicsEntity,
+  Aired,
 } from "./jikan";
 
 export interface Anime {
@@ -12,4 +13,8 @@ export interface Anime {
     | ProducersEntityOrStudiosEntityOrGenresEntityOrDemographicsEntity[]
     | null;
   rank: number;
+  year?: number | null;
+  type: string;
+  aired: Aired;
+  status: string;
 }

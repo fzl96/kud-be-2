@@ -68,9 +68,7 @@
     --input: 0 0% 20%;
     --ring: 0 0% 85%;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
@@ -79,3 +77,18 @@
   }
 }
 
+@layer utilities {
+  .scrollbar::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  .scrollbar::-webkit-scrollbar-track {
+    border-radius: 100vh;
+    background: #1a1a1a;
+  }
+
+  .scrollbar::-webkit-scrollbar-thumb {
+    border-radius: 100vh;
+    border: 3px solid hsl(0, 0%, 50%);
+  }
+}
