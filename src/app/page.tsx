@@ -1,6 +1,11 @@
+import { type Metadata } from "next";
 import { Badge } from "@/components/ui/badge";
 import { ListForm } from "@/components/list-form";
 import { Header } from "@/components/header";
+
+export const metadata: Metadata = {
+  title: "Share Your Favorite Anime",
+};
 
 export default function HomePage() {
   return (
